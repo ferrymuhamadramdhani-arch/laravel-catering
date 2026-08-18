@@ -17,11 +17,9 @@
     "jsx": "react-jsx",
 
     /* Paths */
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
-    "ignoreDeprecations": "6.0",
 
     /* Linting */
     "noUnusedLocals": true,
