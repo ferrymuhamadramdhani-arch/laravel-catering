@@ -365,23 +365,14 @@ export const AdminLayout: React.FC = () => {
 
         {/* User Footer */}
         <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs uppercase">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
-                <p className="text-[10px] text-slate-400 capitalize truncate">{user?.role || 'Owner'}</p>
-              </div>
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">
+              {user?.name?.charAt(0) || 'U'}
             </div>
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="overflow-hidden">
+              <p className="text-xs font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
+              <p className="text-[10px] text-slate-400 capitalize truncate">{user?.role || 'Owner'}</p>
+            </div>
           </div>
         </div>
       </aside>
