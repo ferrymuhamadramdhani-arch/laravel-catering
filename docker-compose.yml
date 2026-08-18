@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Nginx Web Server for Backend API
+  nginx:
+    image: nginx:alpine
+    container_name: cateros-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - cateros-network
+
+  # PHP-FPM Application
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: cateros-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: cateros_db
+      DB_USERNAME: cateros_user
+      DB_PASSWORD: cateros_secret_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cateros-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cateros-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cateros_db
+      POSTGRES_USER: cateros_user
+      POSTGRES_PASSWORD: cateros_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cateros-network
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: cateros-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - cateros-network
+
+  # Mailpit for local email testing
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cateros-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025" # Web UI
+      - "1025:1025" # SMTP
+    networks:
+      - cateros-network
+
+networks:
+  cateros-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
