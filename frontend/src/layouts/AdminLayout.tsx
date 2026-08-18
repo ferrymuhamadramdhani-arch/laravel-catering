@@ -29,8 +29,6 @@ export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [masterDataOpen, setMasterDataOpen] = useState(true);
-  const [userMgmtOpen, setUserMgmtOpen] = useState(true);
 
   const { user, currentTenant, logout } = useAuthStore();
   const location = useLocation();
@@ -43,6 +41,10 @@ export const AdminLayout: React.FC = () => {
 
   const isMasterDataActive = location.pathname.startsWith('/master-data');
   const isUserMgmtActive = location.pathname.startsWith('/users') || location.pathname.startsWith('/roles');
+
+  // Default dropdowns to closed/hidden unless currently on active sub-route
+  const [masterDataOpen, setMasterDataOpen] = useState(isMasterDataActive);
+  const [userMgmtOpen, setUserMgmtOpen] = useState(isUserMgmtActive);
 
   const toggleSidebar = () => {
     if (window.innerWidth < 768) {
