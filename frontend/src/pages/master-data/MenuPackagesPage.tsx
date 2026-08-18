@@ -3,6 +3,7 @@ import apiClient from '../../api/axios';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
 import {
   Package,
@@ -472,27 +473,22 @@ export const MenuPackagesPage: React.FC = () => {
                   required
                 />
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Tipe Paket
-                  </label>
-                  <select
-                    value={packageType}
-                    onChange={(e) => setPackageType(e.target.value)}
-                    className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none"
-                  >
-                    {Object.entries(PACKAGE_TYPES).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Tipe Paket"
+                  value={packageType}
+                  onChange={(e) => setPackageType(e.target.value)}
+                >
+                  {Object.entries(PACKAGE_TYPES).map(([val, label]) => (
+                    <option key={val} value={val}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Kode Paket (Opsional)"
+                  label="Kode SKU Paket (Opsional)"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="PKG-NK-01"
@@ -506,23 +502,25 @@ export const MenuPackagesPage: React.FC = () => {
                   placeholder="35000"
                   required
                 />
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Minimal Pesan (Porsi/Box)"
+                  label="Minimal Order (Porsi/Box)"
                   type="number"
                   value={minOrder}
                   onChange={(e) => setMinOrder(e.target.value)}
                   placeholder="10"
                   required
                 />
-              </div>
 
-              <Input
-                label="Deskripsi & Kelengkapan (Opsional)"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Rincian paket termasuk nasi, lauk, sambal, kerupuk, dan sendok tisu"
-              />
+                <Input
+                  label="Deskripsi Paket (Opsional)"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Cocok untuk acara kantor, syukuran, aqiqah..."
+                />
+              </div>
 
               {/* ITEM BUNDLING SELECTOR */}
               <div className="pt-2 border-t border-slate-100">
@@ -562,18 +560,19 @@ export const MenuPackagesPage: React.FC = () => {
                           key={idx}
                           className="flex flex-col sm:flex-row items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70"
                         >
-                          <div className="flex-1 w-full">
+                          <div className="flex-1 w-full relative">
                             <select
                               value={row.menu_item_id}
                               onChange={(e) => handleItemChange(idx, 'menu_item_id', e.target.value)}
-                              className="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-xs focus:border-amber-500 focus:outline-none font-medium"
+                              className="w-full h-9 rounded-lg border border-slate-300 bg-white pl-2.5 pr-8 text-xs focus:border-amber-500 focus:outline-none font-medium appearance-none cursor-pointer"
                             >
                               {menuItems.map((m) => (
                                 <option key={m.id} value={m.id}>
-                                  {m.name} (HPP: Rp {Number(m.calculated_hpp).toLocaleString('id-ID')})
+                                  {m.name} ({m.category?.name || 'Menu'}) - HPP: Rp {Number(m.calculated_hpp).toLocaleString('id-ID')}
                                 </option>
                               ))}
                             </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
 
                           <div className="w-full sm:w-20">

@@ -3,6 +3,7 @@ import apiClient from '../../api/axios';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import {
   Users,
   UserPlus,
@@ -449,24 +450,19 @@ export const StaffManagementPage: React.FC = () => {
                 placeholder="081234567890"
               />
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Role / Hak Akses Staf
-                </label>
-                <select
-                  value={formRole}
-                  onChange={(e) => setFormRole(e.target.value)}
-                  className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
-                >
-                  {roles
-                    .filter((r) => r.slug !== 'owner')
-                    .map((r) => (
-                      <option key={r.slug} value={r.slug}>
-                        {r.name} {r.is_system ? '(Default)' : '(Custom)'}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <Select
+                label="Role / Hak Akses Staf"
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value)}
+              >
+                {roles
+                  .filter((r) => r.slug !== 'owner')
+                  .map((r) => (
+                    <option key={r.slug} value={r.slug}>
+                      {r.name} {r.is_system ? '(Default)' : '(Custom)'}
+                    </option>
+                  ))}
+              </Select>
 
               <Input
                 label="Kata Sandi Awal"
@@ -535,26 +531,21 @@ export const StaffManagementPage: React.FC = () => {
                 onChange={(e) => setFormPhone(e.target.value)}
               />
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Role / Posisi Staf
-                </label>
-                <select
-                  value={formRole}
-                  onChange={(e) => setFormRole(e.target.value)}
-                  disabled={selectedUser.role === 'owner'}
-                  className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100"
-                >
-                  {selectedUser.role === 'owner' && <option value="owner">Pemilik (Owner)</option>}
-                  {roles
-                    .filter((r) => r.slug !== 'owner')
-                    .map((r) => (
-                      <option key={r.slug} value={r.slug}>
-                        {r.name} {r.is_system ? '(Default)' : '(Custom)'}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <Select
+                label="Role / Posisi Staf"
+                value={formRole}
+                onChange={(e) => setFormRole(e.target.value)}
+                disabled={selectedUser.role === 'owner'}
+              >
+                {selectedUser.role === 'owner' && <option value="owner">Pemilik (Owner)</option>}
+                {roles
+                  .filter((r) => r.slug !== 'owner')
+                  .map((r) => (
+                    <option key={r.slug} value={r.slug}>
+                      {r.name} {r.is_system ? '(Default)' : '(Custom)'}
+                    </option>
+                  ))}
+              </Select>
 
               <Input
                 label="Kata Sandi Baru (Opsional)"

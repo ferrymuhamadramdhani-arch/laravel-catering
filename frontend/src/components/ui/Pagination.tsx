@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from './Button';
 
 export interface PaginationMeta {
@@ -68,17 +68,20 @@ export const Pagination: React.FC<PaginationProps> = ({
         {onPerPageChange && (
           <div className="flex items-center gap-1.5 pl-3 border-l border-slate-200">
             <span>Tampilkan:</span>
-            <select
-              value={per_page}
-              onChange={(e) => onPerPageChange(Number(e.target.value))}
-              className="h-7 px-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 font-medium focus:outline-none focus:border-amber-500"
-            >
-              {perPageOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                value={per_page}
+                onChange={(e) => onPerPageChange(Number(e.target.value))}
+                className="h-7 pl-2 pr-6 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700 font-medium focus:outline-none focus:border-amber-500 appearance-none cursor-pointer"
+              >
+                {perPageOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 pointer-events-none" />
+            </div>
             <span>per halaman</span>
           </div>
         )}

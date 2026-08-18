@@ -3,6 +3,7 @@ import apiClient from '../../api/axios';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import {
   UtensilsCrossed,
   Plus,
@@ -467,23 +468,19 @@ export const MenuItemsPage: React.FC = () => {
                   required
                 />
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Kategori Menu
-                  </label>
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none"
-                  >
-                    <option value="">-- Pilih Kategori --</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Kategori Menu"
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Pilih Kategori --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </Select>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -559,11 +556,11 @@ export const MenuItemsPage: React.FC = () => {
                           key={idx}
                           className="flex flex-col sm:flex-row items-center gap-2 p-2.5 rounded-xl border border-slate-200 bg-slate-50/70"
                         >
-                          <div className="flex-1 w-full">
+                          <div className="flex-1 w-full relative">
                             <select
                               value={row.raw_material_id}
                               onChange={(e) => handleRecipeChange(idx, 'raw_material_id', e.target.value)}
-                              className="w-full h-9 rounded-lg border border-slate-300 bg-white px-2.5 text-xs focus:border-amber-500 focus:outline-none font-medium"
+                              className="w-full h-9 rounded-lg border border-slate-300 bg-white pl-2.5 pr-8 text-xs focus:border-amber-500 focus:outline-none font-medium appearance-none cursor-pointer"
                             >
                               {rawMaterials.map((m) => (
                                 <option key={m.id} value={m.id}>
@@ -571,6 +568,7 @@ export const MenuItemsPage: React.FC = () => {
                                 </option>
                               ))}
                             </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
 
                           <div className="w-full sm:w-28">
@@ -585,11 +583,11 @@ export const MenuItemsPage: React.FC = () => {
                             />
                           </div>
 
-                          <div className="w-full sm:w-24">
+                          <div className="w-full sm:w-24 relative">
                             <select
                               value={row.unit}
                               onChange={(e) => handleRecipeChange(idx, 'unit', e.target.value)}
-                              className="w-full h-9 rounded-lg border border-slate-300 bg-white px-2 text-xs focus:border-amber-500 focus:outline-none"
+                              className="w-full h-9 rounded-lg border border-slate-300 bg-white pl-2 pr-7 text-xs focus:border-amber-500 focus:outline-none appearance-none cursor-pointer"
                             >
                               <option value="gram">gram</option>
                               <option value="kg">kg</option>
@@ -599,6 +597,7 @@ export const MenuItemsPage: React.FC = () => {
                               <option value="butir">butir</option>
                               <option value="ikat">ikat</option>
                             </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                           </div>
 
                           <div className="w-full sm:w-28 text-right font-semibold text-xs text-slate-800">
