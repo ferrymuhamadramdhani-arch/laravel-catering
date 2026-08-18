@@ -1,0 +1,17 @@
+{
+  "name": "cateros-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:backend": "cd backend && php artisan serve --port=8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:all": "npx concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"cd backend && php artisan serve --port=8000\" \"cd frontend && npm run dev\"",
+    "test:backend": "cd backend && php artisan test",
+    "build:frontend": "cd frontend && npm run build",
+    "docs:swagger": "cd backend && php artisan l5-swagger:generate"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
