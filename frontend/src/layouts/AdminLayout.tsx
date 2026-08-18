@@ -17,13 +17,17 @@ import {
   X,
   Building2,
   Bell,
-  ChevronDown
+  ChevronDown,
+  FolderKanban,
+  Tag,
+  Package
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [masterDataOpen, setMasterDataOpen] = useState(true);
   const [userMgmtOpen, setUserMgmtOpen] = useState(true);
 
   const { user, currentTenant, logout } = useAuthStore();
@@ -35,6 +39,7 @@ export const AdminLayout: React.FC = () => {
     navigate('/login');
   };
 
+  const isMasterDataActive = location.pathname.startsWith('/master-data');
   const isUserMgmtActive = location.pathname.startsWith('/users') || location.pathname.startsWith('/roles');
 
   return (
@@ -111,24 +116,95 @@ export const AdminLayout: React.FC = () => {
             </div>
           </NavLink>
 
-          {/* Menus */}
-          <NavLink
-            to="/menus"
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+          {/* Master Data Section (Collapsible Group) */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setMasterDataOpen(!masterDataOpen)}
+              className={cn(
+                'w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isMasterDataActive
+                  ? 'text-amber-400 bg-slate-800/80 font-semibold'
                   : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              )
-            }
-          >
-            <div className="flex items-center gap-3">
-              <UtensilsCrossed className="w-4 h-4" />
-              <span>Menu & Paket</span>
-            </div>
-          </NavLink>
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <FolderKanban className="w-4 h-4" />
+                <span>Master Data</span>
+              </div>
+              <ChevronDown
+                className={cn('w-3.5 h-3.5 transition-transform duration-200', masterDataOpen ? 'rotate-180' : '')}
+              />
+            </button>
+
+            {masterDataOpen && (
+              <div className="pl-9 pr-2 py-1 space-y-1 border-l-2 border-slate-800 ml-4 mt-1">
+                <NavLink
+                  to="/master-data/materials"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Boxes className="w-3.5 h-3.5" />
+                  <span>Bahan Baku</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/categories"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  <span>Kategori Menu</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/menus"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <UtensilsCrossed className="w-3.5 h-3.5" />
+                  <span>Item Menu & Resep (BOM)</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/packages"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Package className="w-3.5 h-3.5" />
+                  <span>Paket Menu & Bundling</span>
+                </NavLink>
+              </div>
+            )}
+          </div>
 
           {/* Orders */}
           <NavLink
@@ -168,25 +244,6 @@ export const AdminLayout: React.FC = () => {
             <div className="flex items-center gap-3">
               <ChefHat className="w-4 h-4" />
               <span>Produksi Dapur</span>
-            </div>
-          </NavLink>
-
-          {/* Inventory */}
-          <NavLink
-            to="/inventory"
-            onClick={() => setSidebarOpen(false)}
-            className={({ isActive }) =>
-              cn(
-                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-              )
-            }
-          >
-            <div className="flex items-center gap-3">
-              <Boxes className="w-4 h-4" />
-              <span>Bahan Baku & Stok</span>
             </div>
           </NavLink>
 

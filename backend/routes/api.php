@@ -49,6 +49,35 @@ Route::prefix('v1')->group(function () {
             Route::get('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'show']);
             Route::put('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'update']);
             Route::delete('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'destroy']);
+
+            // Master Data - Raw Materials (Bahan Baku)
+            Route::get('/raw-materials', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'index']);
+            Route::post('/raw-materials', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'store']);
+            Route::get('/raw-materials/{id}', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'show']);
+            Route::put('/raw-materials/{id}', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'update']);
+            Route::delete('/raw-materials/{id}', [\App\Http\Controllers\Api\V1\RawMaterialController::class, 'destroy']);
+
+            // Master Data - Menu Categories
+            Route::get('/menu-categories', [\App\Http\Controllers\Api\V1\MenuCategoryController::class, 'index']);
+            Route::post('/menu-categories', [\App\Http\Controllers\Api\V1\MenuCategoryController::class, 'store']);
+            Route::put('/menu-categories/{id}', [\App\Http\Controllers\Api\V1\MenuCategoryController::class, 'update']);
+            Route::delete('/menu-categories/{id}', [\App\Http\Controllers\Api\V1\MenuCategoryController::class, 'destroy']);
+
+            // Master Data - Menu Items & BOM Recipes
+            Route::get('/menu-items', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'index']);
+            Route::post('/menu-items', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'store']);
+            Route::get('/menu-items/{id}', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'show']);
+            Route::put('/menu-items/{id}', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'update']);
+            Route::post('/menu-items/{id}/image', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'uploadImage']);
+            Route::delete('/menu-items/{id}', [\App\Http\Controllers\Api\V1\MenuItemController::class, 'destroy']);
+
+            // Master Data - Menu Packages (Bundling)
+            Route::get('/menu-packages', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'index']);
+            Route::post('/menu-packages', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'store']);
+            Route::get('/menu-packages/{id}', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'show']);
+            Route::put('/menu-packages/{id}', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'update']);
+            Route::post('/menu-packages/{id}/image', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'uploadImage']);
+            Route::delete('/menu-packages/{id}', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'destroy']);
         });
 
         // Health Check / Ping

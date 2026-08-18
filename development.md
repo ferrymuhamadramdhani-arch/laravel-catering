@@ -88,18 +88,21 @@ Tujuan: Tenant dapat mendaftar, mengelola menu & BOM, menginput order secara man
   - [x] Halaman Manajemen Pengguna & Staf Tenant (`/users`) dengan filter role & modal CRUD
 
 ### 1.2 Modul Manajemen Menu & BOM (MVP)
-- [ ] **Backend:**
-  - [ ] Migration tabel: `raw_materials`, `menu_categories`, `menu_items`, `menu_recipes_bom`, `menu_packages`, `menu_package_items`
-  - [ ] API CRUD Master Bahan Baku (`raw_materials`) + satuan (`unit`) & harga beli default
-  - [ ] API CRUD Item Menu (`menu_items`) + upload foto ke S3/Storage
-  - [ ] API CRUD Resep/BOM (`menu_recipes_bom`): asosiasi menu item ke bahan baku + takaran
-  - [ ] Logika kalkulasi otomatis HPP per menu berdasarkan harga bahan baku terkini
-  - [ ] API CRUD Paket Menu (`menu_packages`): bundling menu item
-- [ ] **Frontend:**
-  - [ ] Halaman Master Bahan Baku (List, Filter, Modal Tambah/Edit)
-  - [ ] Halaman Master Menu (Grid/Table view, Upload Foto, Detail HPP)
-  - [ ] Builder Resep/BOM (Form dinamis penambahan bahan + kalkulator HPP otomatis)
-  - [ ] Halaman Manajemen Paket Menu (Bundling)
+- [x] **Backend:**
+  - [x] Migration tabel: `raw_materials`, `menu_categories`, `menu_items`, `menu_recipes_bom`, `menu_packages`, `menu_package_items`
+  - [x] API CRUD Master Bahan Baku (`raw_materials`) + satuan (`unit`) & harga beli default
+  - [x] API CRUD Kategori Menu (`menu_categories`)
+  - [x] API CRUD Item Menu (`menu_items`) + upload foto ke Storage
+  - [x] API CRUD Resep/BOM (`menu_recipes_bom`): asosiasi menu item ke bahan baku + takaran
+  - [x] Logika kalkulasi otomatis HPP per menu & per paket berdasarkan harga bahan baku terkini (`HppCalculatorService`)
+  - [x] API CRUD Paket Menu (`menu_packages`): bundling menu item
+  - [x] Dokumentasi Swagger / OpenAPI 3.0 di `/api/documentation`
+- [x] **Frontend:**
+  - [x] Restrukturisasi Group Menu Sidebar **Master Data** (Bahan Baku, Kategori, Menu & BOM, Paket)
+  - [x] Halaman Master Bahan Baku (`/master-data/materials`) (List, Filter, Modal Tambah/Edit)
+  - [x] Halaman Kategori Menu (`/master-data/categories`) (List, Modal Tambah/Edit)
+  - [x] Halaman Master Menu & BOM Builder (`/master-data/menus`) (Grid/Table view, Dynamic BOM builder form + kalkulator HPP otomatis & profit margin)
+  - [x] Halaman Manajemen Paket Menu (`/master-data/packages`) (Bundling item, kalkulasi total modal HPP paket)
 
 ### 1.3 Modul Pemesanan / Order Management (MVP - Manual Input)
 - [ ] **Backend:**

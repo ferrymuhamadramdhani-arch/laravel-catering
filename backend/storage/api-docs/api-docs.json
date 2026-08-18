@@ -261,6 +261,1078 @@
                 ]
             }
         },
+        "/tenant/menu-categories": {
+            "get": {
+                "tags": [
+                    "Master Kategori Menu"
+                ],
+                "summary": "Daftar Kategori Menu",
+                "description": "Get all menu categories for active tenant.",
+                "operationId": "6207379297a8895c724f3808c5ebb6d7",
+                "responses": {
+                    "200": {
+                        "description": "Daftar kategori berhasil diambil"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Master Kategori Menu"
+                ],
+                "summary": "Tambah Kategori Menu Baru",
+                "description": "Store new menu category.",
+                "operationId": "44f3e247034c339020ab747597feac2b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Lauk Utama Ayam & Bebek"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Aneka olahan lauk ayam dan bebek bakar/goreng"
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Kategori menu berhasil dibuat"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-categories/{id}": {
+            "put": {
+                "tags": [
+                    "Master Kategori Menu"
+                ],
+                "summary": "Update Kategori Menu",
+                "description": "Update menu category.",
+                "operationId": "704e7a9eaae398eed41881b78b528416",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Lauk Utama Ayam & Unggas"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Update deskripsi kategori"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Kategori berhasil diperbarui"
+                    },
+                    "404": {
+                        "description": "Kategori tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Master Kategori Menu"
+                ],
+                "summary": "Hapus Kategori Menu",
+                "description": "Delete menu category.",
+                "operationId": "79ee55f1dcaed0c7f434dbb1d352c3c7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Kategori berhasil dihapus"
+                    },
+                    "400": {
+                        "description": "Kategori masih berisi menu item"
+                    },
+                    "404": {
+                        "description": "Kategori tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-items": {
+            "get": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Daftar Item Menu & HPP",
+                "description": "Get all menu items with category and recipes BOM.",
+                "operationId": "031fc802e9fdbfcfc2211b40d774287c",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar menu berhasil diambil"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Tambah Item Menu Baru & Resep BOM",
+                "description": "Store new menu item with optional initial BOM recipe.",
+                "operationId": "1058f7fe1b30df7aa521b36f4500e0ec",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "selling_price"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ayam Bakar Madu Spesial"
+                                    },
+                                    "menu_category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "MN-AYAM-01"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Ayam bakar dengan bumbu madu dan rempah pilihan"
+                                    },
+                                    "selling_price": {
+                                        "type": "number",
+                                        "example": 25000
+                                    },
+                                    "portion_unit": {
+                                        "type": "string",
+                                        "example": "porsi"
+                                    },
+                                    "recipes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "raw_material_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "example": 200
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "gram"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Menu item berhasil dibuat"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-items/{id}": {
+            "get": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Detail Item Menu & Resep BOM",
+                "description": "Show menu item detail with BOM recipes.",
+                "operationId": "1a34bab7d89bc6b26af2d1535378a5b1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail menu berhasil diambil"
+                    },
+                    "404": {
+                        "description": "Menu tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Update Item Menu & Resep BOM",
+                "description": "Update menu item and sync BOM recipes.",
+                "operationId": "46fe5843a4b722b2dee22d1feef23dc6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ayam Bakar Madu Super Pedas"
+                                    },
+                                    "selling_price": {
+                                        "type": "number",
+                                        "example": 27000
+                                    },
+                                    "recipes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "raw_material_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "number",
+                                                    "example": 250
+                                                },
+                                                "unit": {
+                                                    "type": "string",
+                                                    "example": "gram"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Menu berhasil diperbarui"
+                    },
+                    "404": {
+                        "description": "Menu tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Hapus Item Menu",
+                "description": "Delete menu item.",
+                "operationId": "e42f682b6a9670d9504a64a3ac927ac2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Menu berhasil dihapus"
+                    },
+                    "404": {
+                        "description": "Menu tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-items/{id}/image": {
+            "post": {
+                "tags": [
+                    "Master Item Menu & Resep (BOM)"
+                ],
+                "summary": "Upload Foto Item Menu",
+                "description": "Upload photo for menu item.",
+                "operationId": "2552c41db4c720b55e66cb3260428c87",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Foto berhasil diunggah"
+                    },
+                    "422": {
+                        "description": "Validasi gambar gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-packages": {
+            "get": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Daftar Paket Menu & Bundling",
+                "description": "Get all menu packages with bundled items and HPP.",
+                "operationId": "897053ac1bdb80956a951744ee1aa677",
+                "parameters": [
+                    {
+                        "name": "package_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar paket menu berhasil diambil"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Tambah Paket Menu Baru (Bundling)",
+                "description": "Store new menu package with bundled items.",
+                "operationId": "d9dd510c5e008e55cad8dd956e360af5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "package_type",
+                                    "selling_price",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Paket Nasi Kotak Komplit A"
+                                    },
+                                    "package_type": {
+                                        "type": "string",
+                                        "example": "nasi_kotak"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "PKG-NK-01"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Nasi Putih + Ayam Bakar + Sambal Goreng Kentang + Sayur + Kerupuk"
+                                    },
+                                    "selling_price": {
+                                        "type": "number",
+                                        "example": 35000
+                                    },
+                                    "min_order_quantity": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "menu_item_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Paha / Dada"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Paket menu berhasil dibuat"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-packages/{id}": {
+            "get": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Detail Paket Menu Bundling",
+                "description": "Show menu package detail.",
+                "operationId": "964fc59a2804c7d31d1ac69661ee0594",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail paket berhasil diambil"
+                    },
+                    "404": {
+                        "description": "Paket tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Update Paket Menu & Item Bundling",
+                "description": "Update menu package.",
+                "operationId": "e5ca1ecd27b86a3dd40856989180f6a0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Paket Nasi Kotak Super Komplit"
+                                    },
+                                    "selling_price": {
+                                        "type": "number",
+                                        "example": 38000
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "menu_item_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Paket menu berhasil diperbarui"
+                    },
+                    "404": {
+                        "description": "Paket tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Hapus Paket Menu",
+                "description": "Delete menu package.",
+                "operationId": "a346637df70344ab60065b81e7202bd1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paket berhasil dihapus"
+                    },
+                    "404": {
+                        "description": "Paket tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/menu-packages/{id}/image": {
+            "post": {
+                "tags": [
+                    "Master Paket Menu (Bundling)"
+                ],
+                "summary": "Upload Foto Paket Menu",
+                "description": "Upload photo for menu package.",
+                "operationId": "96f62fa869445e89a3dd4f213fd24a00",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Foto paket berhasil diunggah"
+                    },
+                    "422": {
+                        "description": "Validasi gambar gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/raw-materials": {
+            "get": {
+                "tags": [
+                    "Master Bahan Baku"
+                ],
+                "summary": "Daftar Master Bahan Baku",
+                "description": "Get all raw materials with search and category filter.",
+                "operationId": "12c14e67dd23a12a999e7a3f8b3f886e",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar bahan baku berhasil diambil"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Master Bahan Baku"
+                ],
+                "summary": "Tambah Bahan Baku Baru",
+                "description": "Store new raw material.",
+                "operationId": "02fcc52988a34f58f04b150e821b3666",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "unit",
+                                    "default_purchase_price"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Daging Ayam Fillet Dada"
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "RM-AYAM-01"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Daging/Unggas"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "example": "kg"
+                                    },
+                                    "default_purchase_price": {
+                                        "type": "number",
+                                        "example": 45000
+                                    },
+                                    "minimum_stock": {
+                                        "type": "number",
+                                        "example": 5
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Supplier Pasar Induk"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Bahan baku berhasil ditambahkan"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/raw-materials/{id}": {
+            "get": {
+                "tags": [
+                    "Master Bahan Baku"
+                ],
+                "summary": "Detail Bahan Baku",
+                "description": "Show raw material detail.",
+                "operationId": "07bc7e08ecac4e30159e912ce4abb7ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail bahan baku berhasil diambil"
+                    },
+                    "404": {
+                        "description": "Bahan baku tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Master Bahan Baku"
+                ],
+                "summary": "Update Bahan Baku & Harga Beli",
+                "description": "Update raw material.",
+                "operationId": "4e5cbeb2cd0454950e2a6261a7d77073",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Daging Ayam Fillet Paha"
+                                    },
+                                    "category": {
+                                        "type": "string",
+                                        "example": "Daging/Unggas"
+                                    },
+                                    "unit": {
+                                        "type": "string",
+                                        "example": "kg"
+                                    },
+                                    "default_purchase_price": {
+                                        "type": "number",
+                                        "example": 48000
+                                    },
+                                    "minimum_stock": {
+                                        "type": "number",
+                                        "example": 10
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bahan baku berhasil diperbarui"
+                    },
+                    "404": {
+                        "description": "Bahan baku tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Master Bahan Baku"
+                ],
+                "summary": "Hapus Bahan Baku",
+                "description": "Delete raw material.",
+                "operationId": "e1bea87c2b6f1fbe7d39186ffbb67c0c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Bahan baku berhasil dihapus"
+                    },
+                    "400": {
+                        "description": "Bahan baku sedang digunakan dalam resep BOM"
+                    },
+                    "404": {
+                        "description": "Bahan baku tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
         "/tenant/profile": {
             "get": {
                 "tags": [
@@ -1078,6 +2150,22 @@
         {
             "name": "Auth",
             "description": "Endpoint Autentikasi dan Registrasi Tenant CaterOS"
+        },
+        {
+            "name": "Master Kategori Menu",
+            "description": "Endpoint Manajemen Kategori Menu Makanan & Minuman"
+        },
+        {
+            "name": "Master Item Menu & Resep (BOM)",
+            "description": "Endpoint Manajemen Item Menu, Resep Bahan Baku & Kalkulasi HPP"
+        },
+        {
+            "name": "Master Paket Menu (Bundling)",
+            "description": "Endpoint Manajemen Paket Menu, Bundling Item & Total HPP"
+        },
+        {
+            "name": "Master Bahan Baku",
+            "description": "Endpoint Manajemen Master Bahan Baku & Satuan"
         },
         {
             "name": "Tenant Profile & Onboarding",
