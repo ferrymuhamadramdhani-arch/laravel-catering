@@ -1,4 +1,5 @@
 # Root Git Ignore
+node_modules/
 .DS_Store
 .idea/
 .vscode/
