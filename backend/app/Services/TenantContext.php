@@ -35,7 +35,7 @@ class TenantContext
     /**
      * Check if a tenant is currently bound.
      */
-    public function hasTenant(): boolean|bool
+    public function hasTenant(): bool
     {
         return $this->tenant !== null;
     }

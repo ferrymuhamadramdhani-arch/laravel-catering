@@ -76,15 +76,16 @@ Tujuan: Menyiapkan infrastruktur dasar, struktur repository, database multi-tena
 Tujuan: Tenant dapat mendaftar, mengelola menu & BOM, menginput order secara manual, memantau stok bahan baku, dan menerbitkan invoice sederhana.
 
 ### 1.1 Modul Onboarding & Multi-Tenant (MVP)
-- [ ] **Backend:**
-  - [ ] Migration tabel: `tenants`, `users`, `tenant_users`
-  - [ ] API Register Tenant baru (self-service signup)
-  - [ ] API Setup Wizard profil bisnis (nama catering, alamat, no. telp, logo)
-  - [ ] API CRUD Manajemen User Staff per Tenant (Owner, Sales/CS, Kitchen, Warehouse, Courier)
-- [ ] **Frontend:**
-  - [ ] Halaman Landing & Registrasi Tenant
-  - [ ] Wizard Setup Profil Tenant setelah registrasi
-  - [ ] Halaman Manajemen Pengguna / Staf Tenant
+- [x] **Backend:**
+  - [x] Migration tabel: `tenants`, `users`, `tenant_users` & field wizard onboarding
+  - [x] API Register Tenant baru (self-service signup)
+  - [x] API Setup Wizard profil bisnis (nama catering, alamat, no. telp, logo, business_type, service_areas, operating_hours)
+  - [x] API CRUD Manajemen User Staff per Tenant (Owner, Sales/CS, Kitchen, Warehouse, Courier)
+  - [x] Dokumentasi Swagger / OpenAPI 3.0 di `/api/documentation`
+- [x] **Frontend:**
+  - [x] Halaman Landing & Registrasi Tenant
+  - [x] Wizard Setup Profil Tenant 4 Langkah interaktif (`/onboarding`)
+  - [x] Halaman Manajemen Pengguna & Staf Tenant (`/users`) dengan filter role & modal CRUD
 
 ### 1.2 Modul Manajemen Menu & BOM (MVP)
 - [ ] **Backend:**

@@ -46,7 +46,7 @@ export const RegisterTenantPage: React.FC = () => {
 
       const { user, token, tenant } = response.data.data;
       login(user, token, tenant);
-      navigate('/dashboard');
+      navigate('/onboarding');
     } catch (err: any) {
       console.error('Registration error:', err);
       setError(

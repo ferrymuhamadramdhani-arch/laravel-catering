@@ -1,0 +1,804 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "CaterOS SaaS API Documentation",
+        "description": "Dokumentasi RESTful API untuk platform SaaS Management Catering End-to-End CaterOS.",
+        "contact": {
+            "name": "CaterOS Engineering Team",
+            "email": "dev@cateros.id"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api/v1",
+            "description": "Local Development Server"
+        }
+    ],
+    "paths": {
+        "/auth/register-tenant": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Registrasi Tenant Baru & Akun Owner",
+                "description": "Register a new Tenant and its initial Owner account.",
+                "operationId": "b7991f021cadad930158500b38821d1a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenant_name",
+                                    "tenant_slug",
+                                    "owner_name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "tenant_name": {
+                                        "type": "string",
+                                        "example": "Berkah Catering Nusantara"
+                                    },
+                                    "tenant_slug": {
+                                        "type": "string",
+                                        "example": "berkah-catering"
+                                    },
+                                    "owner_name": {
+                                        "type": "string",
+                                        "example": "Ahmad Fauzi"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ahmad@catering.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tenant dan akun owner berhasil didaftarkan",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tenant dan akun owner berhasil didaftarkan."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validasi form gagal"
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login User & Dapatkan Bearer Token",
+                "description": "Authenticate a user and return access token.",
+                "operationId": "985cd5203e2d0a820e113f2f4fdb2847",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "ahmad@catering.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "tenant_slug": {
+                                        "type": "string",
+                                        "example": "berkah-catering"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login berhasil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login berhasil."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Kredensial tidak valid"
+                    },
+                    "403": {
+                        "description": "Tidak memiliki akses ke tenant ini"
+                    }
+                }
+            }
+        },
+        "/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Ambil Profil User & Info Tenant Aktif",
+                "description": "Get authenticated user profile and active tenant.",
+                "operationId": "e339e0e74860c0647fd1d41bbbbc13b2",
+                "responses": {
+                    "200": {
+                        "description": "Data profil berhasil diambil"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/auth/switch-tenant": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Ganti Tenant Aktif untuk Multi-Tenant User",
+                "description": "Switch active tenant for the user.",
+                "operationId": "6ec6f99c279f3aa47ff9b5fc7489d370",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tenant_id"
+                                ],
+                                "properties": {
+                                    "tenant_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tenant aktif berhasil diubah"
+                    },
+                    "403": {
+                        "description": "Tidak terdaftar di tenant ini"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout & Revoke Token",
+                "description": "Logout user and revoke tokens.",
+                "operationId": "a05022a34eef599e04fb0a5254375b84",
+                "responses": {
+                    "200": {
+                        "description": "Logout berhasil"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/tenant/profile": {
+            "get": {
+                "tags": [
+                    "Tenant Profile & Onboarding"
+                ],
+                "summary": "Ambil Profil Bisnis Tenant Aktif",
+                "description": "Get active tenant business profile.",
+                "operationId": "0b3813089671dad3d331db1947ee018a",
+                "responses": {
+                    "200": {
+                        "description": "Profil tenant berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Profil tenant berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tenant Profile & Onboarding"
+                ],
+                "summary": "Update Profil Bisnis Tenant (Setup Wizard)",
+                "description": "Update active tenant business profile & setup wizard data.",
+                "operationId": "85d9705434973e9b9cd58773333c86fe",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Berkah Catering Nusantara"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081234567890"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "kontak@berkah.com"
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "Jl. Melati No. 45, Jakarta Selatan"
+                                    },
+                                    "business_type": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "nasi_kotak",
+                                            "prasmanan",
+                                            "snack_box"
+                                        ]
+                                    },
+                                    "service_areas": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "Jakarta Selatan",
+                                            "Jakarta Pusat",
+                                            "Depok"
+                                        ]
+                                    },
+                                    "operating_hours": {
+                                        "type": "object",
+                                        "example": {
+                                            "open": "07:00",
+                                            "close": "21:00",
+                                            "days": [
+                                                "Senin",
+                                                "Selasa",
+                                                "Rabu",
+                                                "Kamis",
+                                                "Jumat",
+                                                "Sabtu",
+                                                "Minggu"
+                                            ]
+                                        }
+                                    },
+                                    "bank_accounts": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "bank_name": {
+                                                    "type": "string",
+                                                    "example": "BCA"
+                                                },
+                                                "account_number": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "account_name": {
+                                                    "type": "string",
+                                                    "example": "PT Berkah Catering"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profil tenant berhasil diperbarui"
+                    },
+                    "422": {
+                        "description": "Validasi form gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/logo": {
+            "post": {
+                "tags": [
+                    "Tenant Profile & Onboarding"
+                ],
+                "summary": "Upload Logo Bisnis Catering",
+                "description": "Upload tenant business logo.",
+                "operationId": "a5218e9f7883ccbc38b399701ef43459",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "logo"
+                                ],
+                                "properties": {
+                                    "logo": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logo berhasil diupload"
+                    },
+                    "422": {
+                        "description": "File tidak valid"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/complete-onboarding": {
+            "post": {
+                "tags": [
+                    "Tenant Profile & Onboarding"
+                ],
+                "summary": "Selesaikan Wizard Onboarding Tenant",
+                "description": "Mark onboarding wizard as completed.",
+                "operationId": "742dab618488de324a0bdfd7614a3cc2",
+                "responses": {
+                    "200": {
+                        "description": "Onboarding berhasil diselesaikan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/users": {
+            "get": {
+                "tags": [
+                    "Tenant Users & Staff"
+                ],
+                "summary": "Ambil Daftar Staf Tenant Aktif",
+                "description": "Get list of staff users for active tenant.",
+                "operationId": "03666b286bf7d8c2611c0960d0b0689a",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "description": "Filter berdasarkan role (admin, sales, kitchen, warehouse, courier)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Cari berdasarkan nama, email, atau no telp",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daftar staf berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Daftar staf tenant berhasil diambil."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Users & Staff"
+                ],
+                "summary": "Tambah Staf Baru ke Tenant",
+                "description": "Store new staff user and link to tenant.",
+                "operationId": "38ed1c830eabb4a411f79448166d425b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "role"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Dewi Sartika"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "dewi@catering.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "sales",
+                                        "enum": [
+                                            "admin",
+                                            "sales",
+                                            "kitchen",
+                                            "warehouse",
+                                            "courier"
+                                        ]
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081298765432"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Staf baru berhasil ditambahkan"
+                    },
+                    "422": {
+                        "description": "Validasi form gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/users/{id}": {
+            "put": {
+                "tags": [
+                    "Tenant Users & Staff"
+                ],
+                "summary": "Update Data Staf Tenant",
+                "description": "Update existing staff user.",
+                "operationId": "899774043d9437c6ac79cbd88af3a809",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Dewi Sartika Update"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "081299998888"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "kitchen",
+                                        "enum": [
+                                            "owner",
+                                            "admin",
+                                            "sales",
+                                            "kitchen",
+                                            "warehouse",
+                                            "courier"
+                                        ]
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "newpassword123"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Data staf berhasil diperbarui"
+                    },
+                    "404": {
+                        "description": "Staf tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Users & Staff"
+                ],
+                "summary": "Hapus Staf dari Tim Tenant",
+                "description": "Remove staff from tenant.",
+                "operationId": "cb7c08da4d918a5f258c4a7956ebf1bd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Staf berhasil dihapus dari tenant"
+                    },
+                    "400": {
+                        "description": "Tidak dapat menghapus akun Owner utama"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/users/{id}/toggle-status": {
+            "patch": {
+                "tags": [
+                    "Tenant Users & Staff"
+                ],
+                "summary": "Toggle Status Aktif/Nonaktif Staf",
+                "description": "Toggle staff active status.",
+                "operationId": "6e0ab6f1bae36717379155e057957e3c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status staf berhasil diubah"
+                    },
+                    "400": {
+                        "description": "Tidak dapat menonaktifkan akun Owner utama"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Masukkan Token Bearer Sanctum (contoh: 1|abcdef...)",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            },
+            "TenantHeader": {
+                "type": "apiKey",
+                "description": "Header ID Tenant yang sedang aktif (contoh: 1)",
+                "name": "X-Tenant-ID",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Endpoint Autentikasi dan Registrasi Tenant CaterOS"
+        },
+        {
+            "name": "Tenant Profile & Onboarding",
+            "description": "Endpoint Manajemen Profil Bisnis & Wizard Onboarding Tenant"
+        },
+        {
+            "name": "Tenant Users & Staff",
+            "description": "Endpoint Manajemen Pengguna & Staf Tenant (Owner, Sales, Kitchen, Warehouse, Courier)"
+        }
+    ]
+}

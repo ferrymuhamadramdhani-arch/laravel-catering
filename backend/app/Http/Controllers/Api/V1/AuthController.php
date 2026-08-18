@@ -15,7 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use OpenApi\Attributes as OA;
 
+#[OA\Tag(name: 'Auth', description: 'Endpoint Autentikasi dan Registrasi Tenant CaterOS')]
 class AuthController extends Controller
 {
     use ApiResponse;
@@ -27,6 +29,39 @@ class AuthController extends Controller
     /**
      * Register a new Tenant and its initial Owner account.
      */
+    #[OA\Post(
+        path: '/auth/register-tenant',
+        summary: 'Registrasi Tenant Baru & Akun Owner',
+        tags: ['Auth'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['tenant_name', 'tenant_slug', 'owner_name', 'email', 'password'],
+                properties: [
+                    new OA\Property(property: 'tenant_name', type: 'string', example: 'Berkah Catering Nusantara'),
+                    new OA\Property(property: 'tenant_slug', type: 'string', example: 'berkah-catering'),
+                    new OA\Property(property: 'owner_name', type: 'string', example: 'Ahmad Fauzi'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'ahmad@catering.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                    new OA\Property(property: 'phone', type: 'string', example: '081234567890'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Tenant dan akun owner berhasil didaftarkan',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Tenant dan akun owner berhasil didaftarkan.'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Validasi form gagal'),
+        ]
+    )]
     public function registerTenant(RegisterTenantRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -40,6 +75,7 @@ class AuthController extends Controller
                 'email' => $validated['email'],
                 'subscription_plan' => 'starter',
                 'is_active' => true,
+                'onboarding_completed' => false,
                 'trial_ends_at' => now()->addDays(14),
             ]);
 
@@ -80,6 +116,37 @@ class AuthController extends Controller
     /**
      * Authenticate a user and return access token.
      */
+    #[OA\Post(
+        path: '/auth/login',
+        summary: 'Login User & Dapatkan Bearer Token',
+        tags: ['Auth'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'ahmad@catering.com'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+                    new OA\Property(property: 'tenant_slug', type: 'string', example: 'berkah-catering'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Login berhasil',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Login berhasil.'),
+                        new OA\Property(property: 'data', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 422, description: 'Kredensial tidak valid'),
+            new OA\Response(response: 403, description: 'Tidak memiliki akses ke tenant ini'),
+        ]
+    )]
     public function login(LoginRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -119,6 +186,16 @@ class AuthController extends Controller
     /**
      * Get authenticated user profile and active tenant.
      */
+    #[OA\Get(
+        path: '/auth/me',
+        summary: 'Ambil Profil User & Info Tenant Aktif',
+        security: [['bearerAuth' => []], ['TenantHeader' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'Data profil berhasil diambil'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function me(Request $request): JsonResponse
     {
         $user = $request->user()->load(['currentTenant', 'tenants']);
@@ -133,6 +210,25 @@ class AuthController extends Controller
     /**
      * Switch active tenant for the user.
      */
+    #[OA\Post(
+        path: '/auth/switch-tenant',
+        summary: 'Ganti Tenant Aktif untuk Multi-Tenant User',
+        security: [['bearerAuth' => []]],
+        tags: ['Auth'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['tenant_id'],
+                properties: [
+                    new OA\Property(property: 'tenant_id', type: 'integer', example: 1),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Tenant aktif berhasil diubah'),
+            new OA\Response(response: 403, description: 'Tidak terdaftar di tenant ini'),
+        ]
+    )]
     public function switchTenant(Request $request): JsonResponse
     {
         $request->validate([
@@ -157,6 +253,16 @@ class AuthController extends Controller
     /**
      * Logout user and revoke tokens.
      */
+    #[OA\Post(
+        path: '/auth/logout',
+        summary: 'Logout & Revoke Token',
+        security: [['bearerAuth' => []]],
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'Logout berhasil'),
+            new OA\Response(response: 401, description: 'Unauthenticated'),
+        ]
+    )]
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

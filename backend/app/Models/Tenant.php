@@ -20,7 +20,12 @@ class Tenant extends Model
         'address',
         'logo_url',
         'subscription_plan',
+        'business_type',
+        'service_areas',
+        'operating_hours',
+        'bank_accounts',
         'is_active',
+        'onboarding_completed',
         'trial_ends_at',
     ];
 
@@ -28,6 +33,11 @@ class Tenant extends Model
     {
         return [
             'is_active' => 'boolean',
+            'onboarding_completed' => 'boolean',
+            'business_type' => 'array',
+            'service_areas' => 'array',
+            'operating_hours' => 'array',
+            'bank_accounts' => 'array',
             'trial_ends_at' => 'datetime',
         ];
     }
