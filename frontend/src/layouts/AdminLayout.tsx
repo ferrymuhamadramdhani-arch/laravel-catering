@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import {
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   Truck,
   Receipt,
   Users,
+  ShieldCheck,
   Settings,
   LogOut,
   Menu as MenuIcon,
@@ -20,35 +21,21 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
-}
-
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Menu & Paket', href: '/menus', icon: UtensilsCrossed },
-  { label: 'Pesanan', href: '/orders', icon: ShoppingBag, badge: 'MVP' },
-  { label: 'Produksi Dapur', href: '/kitchen', icon: ChefHat },
-  { label: 'Bahan Baku & Stok', href: '/inventory', icon: Boxes },
-  { label: 'Pengiriman & Kurir', href: '/deliveries', icon: Truck },
-  { label: 'Keuangan & Invoice', href: '/finance', icon: Receipt },
-  { label: 'Staf & Pengguna', href: '/users', icon: Users },
-  { label: 'Pengaturan', href: '/settings', icon: Settings },
-];
-
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [userMgmtOpen, setUserMgmtOpen] = useState(true);
+
   const { user, currentTenant, logout } = useAuthStore();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  const isUserMgmtActive = location.pathname.startsWith('/users') || location.pathname.startsWith('/roles');
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
@@ -105,34 +92,218 @@ export const AdminLayout: React.FC = () => {
 
         {/* Navigation Items */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
-                  )
-                }
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </div>
-                {item.badge && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-                    {item.badge}
-                  </span>
-                )}
-              </NavLink>
-            );
-          })}
+          {/* Dashboard */}
+          <NavLink
+            to="/dashboard"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dashboard</span>
+            </div>
+          </NavLink>
+
+          {/* Menus */}
+          <NavLink
+            to="/menus"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <UtensilsCrossed className="w-4 h-4" />
+              <span>Menu & Paket</span>
+            </div>
+          </NavLink>
+
+          {/* Orders */}
+          <NavLink
+            to="/orders"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="w-4 h-4" />
+              <span>Pesanan</span>
+            </div>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+              MVP
+            </span>
+          </NavLink>
+
+          {/* Kitchen */}
+          <NavLink
+            to="/kitchen"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <ChefHat className="w-4 h-4" />
+              <span>Produksi Dapur</span>
+            </div>
+          </NavLink>
+
+          {/* Inventory */}
+          <NavLink
+            to="/inventory"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <Boxes className="w-4 h-4" />
+              <span>Bahan Baku & Stok</span>
+            </div>
+          </NavLink>
+
+          {/* Deliveries */}
+          <NavLink
+            to="/deliveries"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <Truck className="w-4 h-4" />
+              <span>Pengiriman & Kurir</span>
+            </div>
+          </NavLink>
+
+          {/* Finance */}
+          <NavLink
+            to="/finance"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <Receipt className="w-4 h-4" />
+              <span>Keuangan & Invoice</span>
+            </div>
+          </NavLink>
+
+          {/* User Management Section (Collapsible Group) */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setUserMgmtOpen(!userMgmtOpen)}
+              className={cn(
+                'w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isUserMgmtActive
+                  ? 'text-amber-400 bg-slate-800/80 font-semibold'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" />
+                <span>User Management</span>
+              </div>
+              <ChevronDown
+                className={cn('w-3.5 h-3.5 transition-transform duration-200', userMgmtOpen ? 'rotate-180' : '')}
+              />
+            </button>
+
+            {userMgmtOpen && (
+              <div className="pl-9 pr-2 py-1 space-y-1 border-l-2 border-slate-800 ml-4 mt-1">
+                <NavLink
+                  to="/users"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Daftar Pengguna / Staf</span>
+                </NavLink>
+
+                <NavLink
+                  to="/roles"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Role & Hak Akses</span>
+                </NavLink>
+              </div>
+            )}
+          </div>
+
+          {/* Settings */}
+          <NavLink
+            to="/settings"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <Settings className="w-4 h-4" />
+              <span>Pengaturan Bisnis</span>
+            </div>
+          </NavLink>
         </nav>
 
         {/* User Footer */}

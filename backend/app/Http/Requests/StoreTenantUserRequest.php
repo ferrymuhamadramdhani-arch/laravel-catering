@@ -17,7 +17,7 @@ class StoreTenantUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:admin,sales,kitchen,warehouse,courier'],
+            'role' => ['required', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:20'],
         ];
     }

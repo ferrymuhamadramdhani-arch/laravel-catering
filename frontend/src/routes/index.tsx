@@ -7,6 +7,7 @@ import { RegisterTenantPage } from '../pages/auth/RegisterTenantPage';
 import { OnboardingWizardPage } from '../pages/onboarding/OnboardingWizardPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { StaffManagementPage } from '../pages/admin/StaffManagementPage';
+import { RoleManagementPage } from '../pages/admin/RoleManagementPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -48,6 +49,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/deliveries" element={<DashboardPage />} />
         <Route path="/finance" element={<DashboardPage />} />
         <Route path="/users" element={<StaffManagementPage />} />
+        <Route path="/roles" element={<RoleManagementPage />} />
         <Route path="/settings" element={<DashboardPage />} />
       </Route>
 

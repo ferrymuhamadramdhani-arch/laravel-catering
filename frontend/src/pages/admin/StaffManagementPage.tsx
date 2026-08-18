@@ -19,22 +19,24 @@ import {
   ChefHat,
   Truck,
   Boxes,
-  ShoppingBag
+  ShoppingBag,
+  ShieldCheck
 } from 'lucide-react';
-import type { StaffUser, UserRole } from '../../types/auth';
+import type { StaffUser } from '../../types/auth';
+import type { Role } from '../../types/role';
 
-const ROLE_CONFIG: Record<UserRole, { label: string; color: string; icon: any }> = {
+const ROLE_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   owner: { label: 'Pemilik (Owner)', color: 'bg-amber-100 text-amber-900 border-amber-300', icon: Shield },
   admin: { label: 'Administrator', color: 'bg-purple-100 text-purple-900 border-purple-300', icon: Shield },
   sales: { label: 'Sales / CS', color: 'bg-blue-100 text-blue-900 border-blue-300', icon: ShoppingBag },
   kitchen: { label: 'Kepala Dapur', color: 'bg-emerald-100 text-emerald-900 border-emerald-300', icon: ChefHat },
   warehouse: { label: 'Staff Gudang', color: 'bg-orange-100 text-orange-900 border-orange-300', icon: Boxes },
   courier: { label: 'Kurir / Driver', color: 'bg-teal-100 text-teal-900 border-teal-300', icon: Truck },
-  customer: { label: 'Pelanggan', color: 'bg-slate-100 text-slate-800 border-slate-300', icon: Users },
 };
 
 export const StaffManagementPage: React.FC = () => {
   const [users, setUsers] = useState<StaffUser[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -51,10 +53,10 @@ export const StaffManagementPage: React.FC = () => {
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formPassword, setFormPassword] = useState('');
-  const [formRole, setFormRole] = useState<UserRole>('sales');
+  const [formRole, setFormRole] = useState<string>('sales');
   const [formError, setFormError] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsersAndRoles = async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -62,8 +64,13 @@ export const StaffManagementPage: React.FC = () => {
       if (roleFilter !== 'all') params.role = roleFilter;
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
-      const res = await apiClient.get('/tenant/users', { params });
-      setUsers(res.data.data || []);
+      const [usersRes, rolesRes] = await Promise.all([
+        apiClient.get('/tenant/users', { params }),
+        apiClient.get('/tenant/roles'),
+      ]);
+
+      setUsers(usersRes.data.data || []);
+      setRoles(rolesRes.data.data || []);
     } catch (err: any) {
       console.error('Fetch users error:', err);
       setError(err.response?.data?.message || 'Gagal mengambil data staf tenant.');
@@ -73,12 +80,12 @@ export const StaffManagementPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsersAndRoles();
   }, [roleFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchUsers();
+    fetchUsersAndRoles();
   };
 
   const handleOpenAddModal = () => {
@@ -86,7 +93,7 @@ export const StaffManagementPage: React.FC = () => {
     setFormEmail('');
     setFormPhone('');
     setFormPassword('');
-    setFormRole('sales');
+    setFormRole(roles.find((r) => r.slug !== 'owner')?.slug || 'sales');
     setFormError(null);
     setIsAddModalOpen(true);
   };
@@ -117,7 +124,7 @@ export const StaffManagementPage: React.FC = () => {
       });
 
       setIsAddModalOpen(false);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err: any) {
       console.error('Create user error:', err);
       setFormError(err.response?.data?.message || 'Gagal menambahkan staf baru.');
@@ -142,7 +149,7 @@ export const StaffManagementPage: React.FC = () => {
       });
 
       setIsEditModalOpen(false);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err: any) {
       console.error('Update user error:', err);
       setFormError(err.response?.data?.message || 'Gagal memperbarui staf.');
@@ -154,7 +161,7 @@ export const StaffManagementPage: React.FC = () => {
   const handleToggleStatus = async (user: StaffUser) => {
     try {
       await apiClient.patch(`/tenant/users/${user.id}/toggle-status`);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal mengubah status staf.');
     }
@@ -172,7 +179,7 @@ export const StaffManagementPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/users/${user.id}`);
-      fetchUsers();
+      fetchUsersAndRoles();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Gagal menghapus staf.');
     }
@@ -184,10 +191,10 @@ export const StaffManagementPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-amber-600" /> Manajemen Staf & Tim
+            <Users className="w-7 h-7 text-amber-600" /> Daftar Pengguna & Staf
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Kelola hak akses dan staf operasional catering (Sales, Dapur, Gudang, Kurir)
+            Kelola data staf operasional catering dan posisi penugasan tim
           </p>
         </div>
         <Button onClick={handleOpenAddModal} className="gap-2 self-start sm:self-auto">
@@ -215,20 +222,31 @@ export const StaffManagementPage: React.FC = () => {
             </Button>
           </form>
 
-          {/* Role Filter Tabs */}
+          {/* Dynamic Role Filter Tabs */}
           <div className="flex flex-wrap gap-1.5 w-full md:w-auto">
-            {['all', 'admin', 'sales', 'kitchen', 'warehouse', 'courier'].map((r) => (
+            <button
+              type="button"
+              onClick={() => setRoleFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                roleFilter === 'all'
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/20'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              Semua Role
+            </button>
+            {roles.map((r) => (
               <button
-                key={r}
+                key={r.slug}
                 type="button"
-                onClick={() => setRoleFilter(r)}
+                onClick={() => setRoleFilter(r.slug)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                  roleFilter === r
+                  roleFilter === r.slug
                     ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/20'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                {r === 'all' ? 'Semua Role' : r}
+                {r.name}
               </button>
             ))}
           </div>
@@ -269,7 +287,11 @@ export const StaffManagementPage: React.FC = () => {
                 </tr>
               ) : (
                 users.map((staff) => {
-                  const roleMeta = ROLE_CONFIG[staff.role] || ROLE_CONFIG.sales;
+                  const roleMeta = ROLE_CONFIG[staff.role] || {
+                    label: roles.find((r) => r.slug === staff.role)?.name || staff.role,
+                    color: 'bg-indigo-100 text-indigo-900 border-indigo-300',
+                    icon: ShieldCheck,
+                  };
                   const RoleIcon = roleMeta.icon;
 
                   return (
@@ -401,18 +423,20 @@ export const StaffManagementPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Role / Posisi Staf
+                  Role / Hak Akses Staf
                 </label>
                 <select
                   value={formRole}
-                  onChange={(e) => setFormRole(e.target.value as UserRole)}
+                  onChange={(e) => setFormRole(e.target.value)}
                   className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20"
                 >
-                  <option value="sales">Sales / Customer Service (Input Order & CS)</option>
-                  <option value="kitchen">Kepala Dapur (Kelola Resep & Produksi)</option>
-                  <option value="warehouse">Staff Gudang (Kelola Bahan Baku & Stok)</option>
-                  <option value="courier">Kurir / Driver (Pengantaran Pesanan)</option>
-                  <option value="admin">Administrator (Akses Penuh Non-Owner)</option>
+                  {roles
+                    .filter((r) => r.slug !== 'owner')
+                    .map((r) => (
+                      <option key={r.slug} value={r.slug}>
+                        {r.name} {r.is_system ? '(Default)' : '(Custom)'}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -489,16 +513,18 @@ export const StaffManagementPage: React.FC = () => {
                 </label>
                 <select
                   value={formRole}
-                  onChange={(e) => setFormRole(e.target.value as UserRole)}
+                  onChange={(e) => setFormRole(e.target.value)}
                   disabled={selectedUser.role === 'owner'}
                   className="w-full h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:bg-slate-100"
                 >
                   {selectedUser.role === 'owner' && <option value="owner">Pemilik (Owner)</option>}
-                  <option value="sales">Sales / Customer Service</option>
-                  <option value="kitchen">Kepala Dapur</option>
-                  <option value="warehouse">Staff Gudang</option>
-                  <option value="courier">Kurir / Driver</option>
-                  <option value="admin">Administrator</option>
+                  {roles
+                    .filter((r) => r.slug !== 'owner')
+                    .map((r) => (
+                      <option key={r.slug} value={r.slug}>
+                        {r.name} {r.is_system ? '(Default)' : '(Custom)'}
+                      </option>
+                    ))}
                 </select>
               </div>
 

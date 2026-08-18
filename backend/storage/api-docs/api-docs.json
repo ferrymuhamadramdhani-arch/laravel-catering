@@ -486,6 +486,293 @@
                 ]
             }
         },
+        "/tenant/permissions": {
+            "get": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Ambil Katalog Master Hak Akses (Grouped by Module)",
+                "description": "Get master list of all permissions grouped by module.",
+                "operationId": "230b19927d59afa768633ff4d7c33516",
+                "responses": {
+                    "200": {
+                        "description": "Daftar permissions berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/roles": {
+            "get": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Ambil Daftar Role (System Default + Custom Tenant)",
+                "description": "Get list of all roles available for active tenant.",
+                "operationId": "381cb2ad30e170ffc2f4a32fda8b83df",
+                "responses": {
+                    "200": {
+                        "description": "Daftar role berhasil diambil",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Buat Custom Role Baru",
+                "description": "Create new dynamic custom role for active tenant.",
+                "operationId": "22004da14551084d07231b691af05068",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "permissions"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Supervisor Dapur & CS"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Mengawasi pesanan masuk dan operasional dapur"
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "menu.view",
+                                            "menu.create",
+                                            "orders.view",
+                                            "orders.create",
+                                            "kitchen.view",
+                                            "kitchen.manage"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role baru berhasil dibuat"
+                    },
+                    "422": {
+                        "description": "Validasi gagal"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
+        "/tenant/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Detail Role & Permissions",
+                "description": "Show single role detail.",
+                "operationId": "2222f5018add25253f7e8f1f3be5b053",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detail role berhasil diambil"
+                    },
+                    "404": {
+                        "description": "Role tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Update Custom Role & Hak Akses",
+                "description": "Update custom role permissions and metadata.",
+                "operationId": "d2517de419d9e6d9b19734bc2140f223",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Supervisor CS & Dapur (Updated)"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Deskripsi tugas terbaru"
+                                    },
+                                    "permissions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "menu.view",
+                                            "orders.view",
+                                            "kitchen.view"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role berhasil diperbarui"
+                    },
+                    "400": {
+                        "description": "System role tidak dapat diubah"
+                    },
+                    "404": {
+                        "description": "Role tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tenant Roles & Permissions"
+                ],
+                "summary": "Hapus Custom Role",
+                "description": "Delete custom role.",
+                "operationId": "7b4d029beaa8f1214b83abd0c102a3d4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role berhasil dihapus"
+                    },
+                    "400": {
+                        "description": "Tidak dapat menghapus role yang sedang dipakai atau system role"
+                    },
+                    "404": {
+                        "description": "Role tidak ditemukan"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    },
+                    {
+                        "TenantHeader": []
+                    }
+                ]
+            }
+        },
         "/tenant/users": {
             "get": {
                 "tags": [
@@ -795,6 +1082,10 @@
         {
             "name": "Tenant Profile & Onboarding",
             "description": "Endpoint Manajemen Profil Bisnis & Wizard Onboarding Tenant"
+        },
+        {
+            "name": "Tenant Roles & Permissions",
+            "description": "Endpoint Manajemen Role Dinamis & Matriks Hak Akses"
         },
         {
             "name": "Tenant Users & Staff",

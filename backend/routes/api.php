@@ -41,6 +41,14 @@ Route::prefix('v1')->group(function () {
             Route::put('/users/{id}', [TenantUserController::class, 'update']);
             Route::patch('/users/{id}/toggle-status', [TenantUserController::class, 'toggleStatus']);
             Route::delete('/users/{id}', [TenantUserController::class, 'destroy']);
+
+            // Dynamic Roles & Permissions Matrix
+            Route::get('/permissions', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'permissions']);
+            Route::get('/roles', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'index']);
+            Route::post('/roles', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'store']);
+            Route::get('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'show']);
+            Route::put('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'update']);
+            Route::delete('/roles/{id}', [\App\Http\Controllers\Api\V1\TenantRoleController::class, 'destroy']);
         });
 
         // Health Check / Ping

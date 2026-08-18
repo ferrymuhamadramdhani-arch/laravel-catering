@@ -17,7 +17,7 @@ class UpdateTenantUserRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'required', 'string', 'email', 'max:255'],
             'password' => ['nullable', 'string', 'min:8'],
-            'role' => ['sometimes', 'required', 'in:owner,admin,sales,kitchen,warehouse,courier'],
+            'role' => ['sometimes', 'required', 'string', 'max:100'],
             'phone' => ['nullable', 'string', 'max:20'],
             'is_active' => ['sometimes', 'boolean'],
         ];

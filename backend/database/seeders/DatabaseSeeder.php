@@ -15,6 +15,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 0. Seed Default System Roles (Global)
+        $defaultRoles = \App\Services\PermissionRegistry::defaultRolePermissions();
+        foreach ($defaultRoles as $slug => $data) {
+            \App\Models\Role::firstOrCreate(
+                ['slug' => $slug, 'tenant_id' => null],
+                [
+                    'name' => $data['name'],
+                    'slug' => $slug,
+                    'description' => $data['description'],
+                    'permissions' => $data['permissions'],
+                    'is_system' => true,
+                ]
+            );
+        }
+
         // 1. Buat Sample Tenant Catering
         $tenant = Tenant::firstOrCreate(
             ['slug' => 'berkah-catering'],
