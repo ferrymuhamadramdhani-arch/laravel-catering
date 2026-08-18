@@ -362,19 +362,6 @@ export const AdminLayout: React.FC = () => {
             </div>
           </NavLink>
         </nav>
-
-        {/* User Footer */}
-        <div className="p-4 border-t border-slate-800">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-xs uppercase flex-shrink-0">
-              {user?.name?.charAt(0) || 'U'}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-xs font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
-              <p className="text-[10px] text-slate-400 capitalize truncate">{user?.role || 'Owner'}</p>
-            </div>
-          </div>
-        </div>
       </aside>
 
       {/* Main Content Area */}
