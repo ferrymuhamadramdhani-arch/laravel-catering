@@ -67,9 +67,15 @@ class MenuPackageController extends Controller
             });
         }
 
-        $packages = $query->get();
+        if ($request->boolean('all')) {
+            $packages = $query->get();
+            return $this->successResponse($packages, 'Daftar paket menu berhasil diambil.');
+        }
 
-        return $this->successResponse($packages, 'Daftar paket menu berhasil diambil.');
+        $perPage = (int) $request->input('per_page', 10);
+        $paginated = $query->paginate($perPage);
+
+        return $this->paginatedResponse($paginated, 'Daftar paket menu berhasil diambil.');
     }
 
     /**

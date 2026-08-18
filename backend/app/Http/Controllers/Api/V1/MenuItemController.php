@@ -68,9 +68,15 @@ class MenuItemController extends Controller
             });
         }
 
-        $items = $query->get();
+        if ($request->boolean('all')) {
+            $items = $query->get();
+            return $this->successResponse($items, 'Daftar item menu berhasil diambil.');
+        }
 
-        return $this->successResponse($items, 'Daftar item menu berhasil diambil.');
+        $perPage = (int) $request->input('per_page', 10);
+        $paginated = $query->paginate($perPage);
+
+        return $this->paginatedResponse($paginated, 'Daftar item menu berhasil diambil.');
     }
 
     /**

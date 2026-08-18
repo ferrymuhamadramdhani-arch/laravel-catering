@@ -17,6 +17,7 @@ import {
   Percent,
   UtensilsCrossed
 } from 'lucide-react';
+import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { MenuPackage, MenuItem } from '../../types/menu';
 
 const PACKAGE_TYPES: Record<string, string> = {
@@ -41,6 +42,16 @@ export const MenuPackagesPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination State (Default 10)
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<MenuPackage | null>(null);
@@ -60,16 +71,29 @@ export const MenuPackagesPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params: any = {};
+      const params: any = {
+        page,
+        per_page: perPage,
+      };
       if (typeFilter !== 'all') params.package_type = typeFilter;
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const [pkgsRes, itemsRes] = await Promise.all([
         apiClient.get('/tenant/menu-packages', { params }),
-        apiClient.get('/tenant/menu-items'),
+        apiClient.get('/tenant/menu-items', { params: { all: true } }),
       ]);
 
       setPackages(pkgsRes.data.data || []);
+      if (pkgsRes.data.meta) {
+        setPaginationMeta(pkgsRes.data.meta);
+      } else {
+        setPaginationMeta({
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: (pkgsRes.data.data || []).length,
+        });
+      }
       setMenuItems(itemsRes.data.data || []);
     } catch (err: any) {
       console.error('Fetch packages error:', err);
@@ -81,10 +105,11 @@ export const MenuPackagesPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [typeFilter]);
+  }, [page, perPage, typeFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     fetchData();
   };
 
@@ -398,6 +423,16 @@ export const MenuPackagesPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+        />
       </Card>
 
       {/* MODAL BUILDER PAKET MENU */}

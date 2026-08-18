@@ -17,6 +17,7 @@ import {
   Percent,
   Layers
 } from 'lucide-react';
+import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { MenuItem, MenuCategory, RawMaterial } from '../../types/menu';
 
 interface RecipeFormItem {
@@ -33,6 +34,16 @@ export const MenuItemsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination State (Default 10)
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,17 +64,30 @@ export const MenuItemsPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params: any = {};
+      const params: any = {
+        page,
+        per_page: perPage,
+      };
       if (categoryFilter !== 'all') params.category_id = categoryFilter;
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const [itemsRes, catsRes, matsRes] = await Promise.all([
         apiClient.get('/tenant/menu-items', { params }),
         apiClient.get('/tenant/menu-categories'),
-        apiClient.get('/tenant/raw-materials'),
+        apiClient.get('/tenant/raw-materials', { params: { all: true } }),
       ]);
 
       setMenuItems(itemsRes.data.data || []);
+      if (itemsRes.data.meta) {
+        setPaginationMeta(itemsRes.data.meta);
+      } else {
+        setPaginationMeta({
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: (itemsRes.data.data || []).length,
+        });
+      }
       setCategories(catsRes.data.data || []);
       setRawMaterials(matsRes.data.data || []);
     } catch (err: any) {
@@ -76,10 +100,11 @@ export const MenuItemsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [categoryFilter]);
+  }, [page, perPage, categoryFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     fetchData();
   };
 
@@ -392,6 +417,16 @@ export const MenuItemsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+        />
       </Card>
 
       {/* MODAL BUILDER MENU & RESEP (BOM) */}

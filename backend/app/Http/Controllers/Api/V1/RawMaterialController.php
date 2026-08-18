@@ -60,9 +60,15 @@ class RawMaterialController extends Controller
             });
         }
 
-        $materials = $query->get();
+        if ($request->boolean('all')) {
+            $materials = $query->get();
+            return $this->successResponse($materials, 'Daftar bahan baku berhasil diambil.');
+        }
 
-        return $this->successResponse($materials, 'Daftar bahan baku berhasil diambil.');
+        $perPage = (int) $request->input('per_page', 10);
+        $paginated = $query->paginate($perPage);
+
+        return $this->paginatedResponse($paginated, 'Daftar bahan baku berhasil diambil.');
     }
 
     /**

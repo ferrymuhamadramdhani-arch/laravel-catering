@@ -16,6 +16,7 @@ import {
   X,
   TrendingDown
 } from 'lucide-react';
+import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { RawMaterial } from '../../types/menu';
 
 const CATEGORIES = [
@@ -39,6 +40,16 @@ export const RawMaterialsPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination State (Default 10)
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<RawMaterial | null>(null);
@@ -59,12 +70,25 @@ export const RawMaterialsPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params: any = {};
+      const params: any = {
+        page,
+        per_page: perPage,
+      };
       if (categoryFilter !== 'all') params.category = categoryFilter;
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
       const res = await apiClient.get('/tenant/raw-materials', { params });
       setMaterials(res.data.data || []);
+      if (res.data.meta) {
+        setPaginationMeta(res.data.meta);
+      } else {
+        setPaginationMeta({
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: (res.data.data || []).length,
+        });
+      }
     } catch (err: any) {
       console.error('Fetch materials error:', err);
       setError(err.response?.data?.message || 'Gagal memuat data master bahan baku.');
@@ -75,10 +99,11 @@ export const RawMaterialsPage: React.FC = () => {
 
   useEffect(() => {
     fetchMaterials();
-  }, [categoryFilter]);
+  }, [page, perPage, categoryFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     fetchMaterials();
   };
 
@@ -310,6 +335,16 @@ export const RawMaterialsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+        />
       </Card>
 
       {/* MODAL TAMBAH / EDIT BAHAN BAKU */}

@@ -73,7 +73,26 @@ class TenantUserController extends Controller
             });
         }
 
-        $users = $query->orderBy('users.id', 'desc')->get()->map(function ($user) {
+        if ($request->boolean('all')) {
+            $users = $query->orderBy('users.id', 'desc')->get()->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'avatar_url' => $user->avatar_url,
+                    'role' => $user->pivot->role,
+                    'is_active' => (bool) $user->pivot->is_active,
+                    'created_at' => $user->pivot->created_at,
+                ];
+            });
+            return $this->successResponse($users, 'Daftar staf tenant berhasil diambil.');
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        $paginated = $query->orderBy('users.id', 'desc')->paginate($perPage);
+
+        $paginated->getCollection()->transform(function ($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -86,7 +105,7 @@ class TenantUserController extends Controller
             ];
         });
 
-        return $this->successResponse($users, 'Daftar staf tenant berhasil diambil.');
+        return $this->paginatedResponse($paginated, 'Daftar staf tenant berhasil diambil.');
     }
 
     /**

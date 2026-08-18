@@ -24,6 +24,7 @@ import {
   Filter,
   ChevronDown
 } from 'lucide-react';
+import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { StaffUser } from '../../types/auth';
 import type { Role } from '../../types/role';
 
@@ -44,6 +45,16 @@ export const StaffManagementPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
 
+  // Pagination State (Default 10)
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
+
   // Modal States
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -62,7 +73,10 @@ export const StaffManagementPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const params: any = {};
+      const params: any = {
+        page,
+        per_page: perPage,
+      };
       if (roleFilter !== 'all') params.role = roleFilter;
       if (searchQuery.trim()) params.search = searchQuery.trim();
 
@@ -72,6 +86,16 @@ export const StaffManagementPage: React.FC = () => {
       ]);
 
       setUsers(usersRes.data.data || []);
+      if (usersRes.data.meta) {
+        setPaginationMeta(usersRes.data.meta);
+      } else {
+        setPaginationMeta({
+          current_page: 1,
+          last_page: 1,
+          per_page: perPage,
+          total: (usersRes.data.data || []).length,
+        });
+      }
       setRoles(rolesRes.data.data || []);
     } catch (err: any) {
       console.error('Fetch users error:', err);
@@ -83,10 +107,11 @@ export const StaffManagementPage: React.FC = () => {
 
   useEffect(() => {
     fetchUsersAndRoles();
-  }, [roleFilter]);
+  }, [page, perPage, roleFilter]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPage(1);
     fetchUsersAndRoles();
   };
 
@@ -367,6 +392,16 @@ export const StaffManagementPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        <Pagination
+          meta={paginationMeta}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPerPageChange={(newPerPage) => {
+            setPerPage(newPerPage);
+            setPage(1);
+          }}
+        />
       </Card>
 
       {/* MODAL TAMBAH STAF */}
