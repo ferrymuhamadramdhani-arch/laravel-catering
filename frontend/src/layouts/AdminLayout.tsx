@@ -14,18 +14,20 @@ import {
   Settings,
   LogOut,
   Menu as MenuIcon,
-  X,
   Building2,
   Bell,
   ChevronDown,
   FolderKanban,
   Tag,
-  Package
+  Package,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [masterDataOpen, setMasterDataOpen] = useState(true);
   const [userMgmtOpen, setUserMgmtOpen] = useState(true);
@@ -42,6 +44,14 @@ export const AdminLayout: React.FC = () => {
   const isMasterDataActive = location.pathname.startsWith('/master-data');
   const isUserMgmtActive = location.pathname.startsWith('/users') || location.pathname.startsWith('/roles');
 
+  const toggleSidebar = () => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(!sidebarOpen);
+    } else {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Mobile Sidebar Overlay */}
@@ -55,28 +65,34 @@ export const AdminLayout: React.FC = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-200 flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:h-screen md:sticky md:top-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-200 flex flex-col transition-all duration-300 ease-in-out md:static md:h-screen md:sticky md:top-0',
+          // Mobile state
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+          // Desktop collapsed state
+          sidebarCollapsed ? 'md:hidden md:w-0 md:overflow-hidden' : 'md:w-64'
         )}
       >
-        {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-amber-500/20">
+        {/* Brand Header with Hide Sidebar Button */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-amber-500/20 flex-shrink-0">
               C
             </div>
-            <div>
-              <span className="font-bold text-white tracking-wide text-lg">CaterOS</span>
-              <span className="text-[10px] block text-amber-400 font-semibold uppercase tracking-wider -mt-1">
+            <div className="overflow-hidden">
+              <span className="font-bold text-white tracking-wide text-lg block leading-none">CaterOS</span>
+              <span className="text-[10px] block text-amber-400 font-semibold uppercase tracking-wider mt-0.5">
                 SaaS Catering
               </span>
             </div>
           </div>
+
+          {/* Toggle / Hide Sidebar Button */}
           <button
-            className="md:hidden text-slate-400 hover:text-white"
-            onClick={() => setSidebarOpen(false)}
+            onClick={toggleSidebar}
+            title="Sembunyikan Sidebar"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <PanelLeftClose className="w-5 h-5" />
           </button>
         </div>
 
@@ -368,13 +384,20 @@ export const AdminLayout: React.FC = () => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-sm shadow-slate-100">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Sidebar Toggle Button (Visible on Mobile & when Desktop is Collapsed) */}
             <button
-              className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
-              onClick={() => setSidebarOpen(true)}
+              onClick={toggleSidebar}
+              title={sidebarCollapsed ? 'Tampilkan Menu Sidebar' : 'Sembunyikan Menu Sidebar'}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
             >
-              <MenuIcon className="w-5 h-5" />
+              {sidebarCollapsed ? (
+                <PanelLeftOpen className="w-5 h-5 text-amber-600" />
+              ) : (
+                <MenuIcon className="w-5 h-5" />
+              )}
             </button>
+
             <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">
               <span>Tenant:</span>
               <span className="px-2 py-1 rounded bg-slate-100 text-slate-800 font-semibold border border-slate-200">
