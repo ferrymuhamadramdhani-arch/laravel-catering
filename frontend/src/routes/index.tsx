@@ -12,6 +12,10 @@ import { RawMaterialsPage } from '../pages/master-data/RawMaterialsPage';
 import { MenuCategoriesPage } from '../pages/master-data/MenuCategoriesPage';
 import { MenuItemsPage } from '../pages/master-data/MenuItemsPage';
 import { MenuPackagesPage } from '../pages/master-data/MenuPackagesPage';
+import { CustomersPage } from '../pages/master-data/CustomersPage';
+import { SuppliersPage } from '../pages/master-data/SuppliersPage';
+import { DeliveryAreasPage } from '../pages/master-data/DeliveryAreasPage';
+import { OrdersPage } from '../pages/orders/OrdersPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { ProtectedRoute } from './ProtectedRoute';
 
@@ -52,10 +56,13 @@ export const AppRoutes: React.FC = () => {
         <Route path="/master-data/categories" element={<MenuCategoriesPage />} />
         <Route path="/master-data/menus" element={<MenuItemsPage />} />
         <Route path="/master-data/packages" element={<MenuPackagesPage />} />
+        <Route path="/master-data/customers" element={<CustomersPage />} />
+        <Route path="/master-data/suppliers" element={<SuppliersPage />} />
+        <Route path="/master-data/delivery-areas" element={<DeliveryAreasPage />} />
         <Route path="/menus" element={<Navigate to="/master-data/menus" replace />} />
 
         {/* Operations */}
-        <Route path="/orders" element={<DashboardPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
         <Route path="/kitchen" element={<DashboardPage />} />
         <Route path="/inventory" element={<Navigate to="/master-data/materials" replace />} />
         <Route path="/deliveries" element={<DashboardPage />} />

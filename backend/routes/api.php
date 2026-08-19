@@ -78,6 +78,36 @@ Route::prefix('v1')->group(function () {
             Route::put('/menu-packages/{id}', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'update']);
             Route::post('/menu-packages/{id}/image', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'uploadImage']);
             Route::delete('/menu-packages/{id}', [\App\Http\Controllers\Api\V1\MenuPackageController::class, 'destroy']);
+
+            // Master Data - Customers (Pelanggan)
+            Route::get('/customers', [\App\Http\Controllers\Api\V1\CustomerController::class, 'index']);
+            Route::post('/customers', [\App\Http\Controllers\Api\V1\CustomerController::class, 'store']);
+            Route::get('/customers/{id}', [\App\Http\Controllers\Api\V1\CustomerController::class, 'show']);
+            Route::put('/customers/{id}', [\App\Http\Controllers\Api\V1\CustomerController::class, 'update']);
+            Route::delete('/customers/{id}', [\App\Http\Controllers\Api\V1\CustomerController::class, 'destroy']);
+
+            // Master Data - Suppliers (Pemasok Bahan Baku)
+            Route::get('/suppliers', [\App\Http\Controllers\Api\V1\SupplierController::class, 'index']);
+            Route::post('/suppliers', [\App\Http\Controllers\Api\V1\SupplierController::class, 'store']);
+            Route::get('/suppliers/{id}', [\App\Http\Controllers\Api\V1\SupplierController::class, 'show']);
+            Route::put('/suppliers/{id}', [\App\Http\Controllers\Api\V1\SupplierController::class, 'update']);
+            Route::delete('/suppliers/{id}', [\App\Http\Controllers\Api\V1\SupplierController::class, 'destroy']);
+
+            // Master Data - Delivery Areas (Zona Pengiriman)
+            Route::get('/delivery-areas', [\App\Http\Controllers\Api\V1\DeliveryAreaController::class, 'index']);
+            Route::post('/delivery-areas', [\App\Http\Controllers\Api\V1\DeliveryAreaController::class, 'store']);
+            Route::get('/delivery-areas/{id}', [\App\Http\Controllers\Api\V1\DeliveryAreaController::class, 'show']);
+            Route::put('/delivery-areas/{id}', [\App\Http\Controllers\Api\V1\DeliveryAreaController::class, 'update']);
+            Route::delete('/delivery-areas/{id}', [\App\Http\Controllers\Api\V1\DeliveryAreaController::class, 'destroy']);
+
+            // Order Management (Modul Pemesanan & Alur Lifecycle)
+            Route::get('/orders/calendar', [\App\Http\Controllers\Api\V1\OrderController::class, 'calendar']);
+            Route::get('/orders', [\App\Http\Controllers\Api\V1\OrderController::class, 'index']);
+            Route::post('/orders', [\App\Http\Controllers\Api\V1\OrderController::class, 'store']);
+            Route::get('/orders/{id}', [\App\Http\Controllers\Api\V1\OrderController::class, 'show']);
+            Route::put('/orders/{id}', [\App\Http\Controllers\Api\V1\OrderController::class, 'update']);
+            Route::patch('/orders/{id}/status', [\App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
+            Route::delete('/orders/{id}', [\App\Http\Controllers\Api\V1\OrderController::class, 'destroy']);
         });
 
         // Health Check / Ping

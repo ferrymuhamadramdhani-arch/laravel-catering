@@ -26,6 +26,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
+import { toast } from '../../stores/toastStore';
 import type { StaffUser } from '../../types/auth';
 import type { Role } from '../../types/role';
 
@@ -150,7 +151,7 @@ export const StaffManagementPage: React.FC = () => {
         phone: formPhone || undefined,
         role: formRole,
       });
-
+      toast.success(`Akun staf "${formName}" berhasil dibuat!`, 'Berhasil Disimpan');
       setIsAddModalOpen(false);
       fetchUsersAndRoles();
     } catch (err: any) {
@@ -175,7 +176,7 @@ export const StaffManagementPage: React.FC = () => {
         role: formRole,
         password: formPassword ? formPassword : undefined,
       });
-
+      toast.success(`Data staf "${formName}" berhasil diperbarui!`, 'Berhasil Disimpan');
       setIsEditModalOpen(false);
       fetchUsersAndRoles();
     } catch (err: any) {
@@ -189,15 +190,16 @@ export const StaffManagementPage: React.FC = () => {
   const handleToggleStatus = async (user: StaffUser) => {
     try {
       await apiClient.patch(`/tenant/users/${user.id}/toggle-status`);
+      toast.success(`Status akun "${user.name}" berhasil diubah!`);
       fetchUsersAndRoles();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal mengubah status staf.');
+      toast.error(err.response?.data?.message || 'Gagal mengubah status staf.');
     }
   };
 
   const handleDeleteUser = async (user: StaffUser) => {
     if (user.role === 'owner') {
-      alert('Akun Owner utama tidak dapat dihapus.');
+      toast.warning('Akun Owner utama tidak dapat dihapus.');
       return;
     }
 
@@ -207,9 +209,10 @@ export const StaffManagementPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/users/${user.id}`);
+      toast.success(`Staf "${user.name}" berhasil dihapus.`, 'Data Dihapus');
       fetchUsersAndRoles();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus staf.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus staf.');
     }
   };
 

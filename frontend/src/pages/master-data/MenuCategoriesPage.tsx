@@ -14,6 +14,8 @@ import {
   UtensilsCrossed,
   Layers
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
+import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { MenuCategory } from '../../types/menu';
 
 export const MenuCategoriesPage: React.FC = () => {
@@ -82,8 +84,10 @@ export const MenuCategoriesPage: React.FC = () => {
 
       if (editingCategory) {
         await apiClient.put(`/tenant/menu-categories/${editingCategory.id}`, payload);
+        toast.success(`Kategori menu "${name}" berhasil diperbarui!`, 'Berhasil Disimpan');
       } else {
         await apiClient.post('/tenant/menu-categories', payload);
+        toast.success(`Kategori menu baru "${name}" berhasil ditambahkan!`, 'Berhasil Disimpan');
       }
 
       setIsModalOpen(false);
@@ -98,7 +102,7 @@ export const MenuCategoriesPage: React.FC = () => {
 
   const handleDelete = async (cat: MenuCategory) => {
     if (cat.menu_items_count && cat.menu_items_count > 0) {
-      alert(`Kategori "${cat.name}" masih memiliki ${cat.menu_items_count} item menu. Pindahkan menu terlebih dahulu.`);
+      toast.warning(`Kategori "${cat.name}" masih memiliki ${cat.menu_items_count} item menu. Pindahkan menu terlebih dahulu.`);
       return;
     }
 
@@ -108,9 +112,10 @@ export const MenuCategoriesPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/menu-categories/${cat.id}`);
+      toast.success(`Kategori "${cat.name}" berhasil dihapus.`, 'Data Dihapus');
       fetchCategories();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus kategori.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus kategori.');
     }
   };
 

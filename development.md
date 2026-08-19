@@ -103,20 +103,29 @@ Tujuan: Tenant dapat mendaftar, mengelola menu & BOM, menginput order secara man
   - [x] Halaman Kategori Menu (`/master-data/categories`) (List, Modal Tambah/Edit)
   - [x] Halaman Master Menu & BOM Builder (`/master-data/menus`) (Grid/Table view, Dynamic BOM builder form + kalkulator HPP otomatis & profit margin)
   - [x] Halaman Manajemen Paket Menu (`/master-data/packages`) (Bundling item, kalkulasi total modal HPP paket)
+  - [x] Halaman Master Pelanggan (`/master-data/customers`) (List, Filter tipe individu/korporat, Modal CRUD lengkap + catatan preferensi)
+  - [x] Halaman Master Supplier (`/master-data/suppliers`) (List, Search, Modal CRUD + chip termin pembayaran)
+  - [x] Halaman Area Layanan Pengiriman (`/master-data/delivery-areas`) (Grid card, Modal CRUD + ongkir, min. order, estimasi waktu)
+
+> **Master Data Tambahan (Prioritas Tinggi & Sedang):**
+> - [x] **Backend:** Migration + Model + Controller + Swagger API untuk `customers` (individu & korporat)
+> - [x] **Backend:** Migration + Model + Controller + Swagger API untuk `suppliers` (pemasok bahan baku, relasi ke `raw_materials.supplier_id`)
+> - [x] **Backend:** Migration + Model + Controller + Swagger API untuk `delivery_areas` (zona pengiriman + ongkir + min. order)
+
 
 ### 1.3 Modul Pemesanan / Order Management (MVP - Manual Input)
-- [ ] **Backend:**
-  - [ ] Migration tabel: `customers`, `orders`, `order_items`, `order_status_histories`
-  - [ ] API CRUD Database Pelanggan sederhana (Nama, HP, Email, Alamat)
-  - [ ] API Buat Pesanan Manual oleh Sales/CS (pilih customer, paket/item, tanggal kirim, porsi, alamat, catatan)
-  - [ ] Logika State Machine Status Order: `Draft → Confirmed → In Production → Ready → Delivering → Delivered → Completed → Cancelled`
-  - [ ] Audit Trail status perubahan pesanan (`order_status_histories`)
-  - [ ] API List & Filter Order (berdasarkan tanggal, status, customer)
-- [ ] **Frontend:**
-  - [ ] Halaman Form Input Order Cepat untuk Sales/CS
-  - [ ] Halaman Order List dengan filter status & pencarian
-  - [ ] Halaman Detail Order (ringkasan item, status timeline, info pengiriman)
-  - [ ] View Kalender Pesanan (Calendar View beban pesanan harian)
+- [x] **Backend:**
+  - [x] Migration tabel: `customers`, `orders`, `order_items`, `order_status_histories`
+  - [x] API CRUD Database Pelanggan sederhana (Nama, HP, Email, Alamat)
+  - [x] API Buat Pesanan Manual oleh Sales/CS (pilih customer, paket/item, tanggal kirim, porsi, alamat, catatan)
+  - [x] Logika State Machine Status Order: `Draft → Confirmed → In Production → Ready → Delivering → Delivered → Completed → Cancelled`
+  - [x] Audit Trail status perubahan pesanan (`order_status_histories`)
+  - [x] API List & Filter Order (berdasarkan tanggal, status, customer)
+- [x] **Frontend:**
+  - [x] Halaman Form Input Order Cepat untuk Sales/CS (`CreateOrderModal`)
+  - [x] Halaman Order List dengan filter status, rentang tanggal & pencarian (`OrdersPage`)
+  - [x] Halaman Detail Order (ringkasan item, status timeline visual, transisi status, info pengiriman, audit trail) (`OrderDetailModal`)
+  - [x] View Kalender Pesanan (Calendar View beban pesanan & porsi harian) (`OrderCalendarView`)
 
 ### 1.4 Modul Inventaris Bahan Baku Dasar (MVP)
 - [ ] **Backend:**

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RawMaterial extends Model
@@ -21,6 +22,7 @@ class RawMaterial extends Model
         'minimum_stock',
         'current_stock',
         'notes',
+        'supplier_id',
     ];
 
     protected function casts(): array
@@ -35,5 +37,10 @@ class RawMaterial extends Model
     public function recipes(): HasMany
     {
         return $this->hasMany(MenuRecipeBom::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 }

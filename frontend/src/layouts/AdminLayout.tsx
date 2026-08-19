@@ -21,7 +21,10 @@ import {
   Tag,
   Package,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  UserSearch,
+  Factory,
+  MapPinned,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -219,6 +222,54 @@ export const AdminLayout: React.FC = () => {
                 >
                   <Package className="w-3.5 h-3.5" />
                   <span>Paket Menu & Bundling</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/customers"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <UserSearch className="w-3.5 h-3.5" />
+                  <span>Pelanggan</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/suppliers"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Factory className="w-3.5 h-3.5" />
+                  <span>Supplier</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/delivery-areas"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <MapPinned className="w-3.5 h-3.5" />
+                  <span>Area Pengiriman</span>
                 </NavLink>
               </div>
             )}

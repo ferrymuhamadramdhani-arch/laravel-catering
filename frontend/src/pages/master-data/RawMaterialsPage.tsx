@@ -17,6 +17,7 @@ import {
   X,
   TrendingDown
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { RawMaterial } from '../../types/menu';
 
@@ -155,8 +156,10 @@ export const RawMaterialsPage: React.FC = () => {
 
       if (editingMaterial) {
         await apiClient.put(`/tenant/raw-materials/${editingMaterial.id}`, payload);
+        toast.success(`Bahan baku "${name}" berhasil diperbarui!`, 'Berhasil Disimpan');
       } else {
         await apiClient.post('/tenant/raw-materials', payload);
+        toast.success(`Bahan baku baru "${name}" berhasil ditambahkan!`, 'Berhasil Disimpan');
       }
 
       setIsModalOpen(false);
@@ -176,9 +179,10 @@ export const RawMaterialsPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/raw-materials/${material.id}`);
+      toast.success(`Bahan baku "${material.name}" berhasil dihapus.`, 'Data Dihapus');
       fetchMaterials();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus bahan baku.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus bahan baku.');
     }
   };
 

@@ -16,8 +16,10 @@ import {
   AlertCircle,
   X,
   Percent,
+  TrendingUp,
   UtensilsCrossed
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { MenuPackage, MenuItem } from '../../types/menu';
 
@@ -213,8 +215,10 @@ export const MenuPackagesPage: React.FC = () => {
 
       if (editingPackage) {
         await apiClient.put(`/tenant/menu-packages/${editingPackage.id}`, payload);
+        toast.success(`Paket menu "${name}" berhasil diperbarui!`, 'Berhasil Disimpan');
       } else {
         await apiClient.post('/tenant/menu-packages', payload);
+        toast.success(`Paket menu baru "${name}" berhasil ditambahkan!`, 'Berhasil Disimpan');
       }
 
       setIsModalOpen(false);
@@ -234,9 +238,10 @@ export const MenuPackagesPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/menu-packages/${pkg.id}`);
+      toast.success(`Paket menu "${pkg.name}" berhasil dihapus.`, 'Data Dihapus');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus paket menu.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus paket.');
     }
   };
 

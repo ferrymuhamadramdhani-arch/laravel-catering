@@ -15,8 +15,11 @@ import {
   Lock,
   X,
   AlertCircle,
-  KeyRound
+  KeyRound,
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
 import type { Role, PermissionGroup } from '../../types/role';
 
 export const RoleManagementPage: React.FC = () => {
@@ -143,6 +146,7 @@ export const RoleManagementPage: React.FC = () => {
         if (activeRoleForView?.id === updated.id) {
           setActiveRoleForView({ ...activeRoleForView, ...updated });
         }
+        toast.success(`Role "${roleName}" berhasil diperbarui!`, 'Berhasil Disimpan');
       } else {
         // Create
         const res = await apiClient.post('/tenant/roles', {
@@ -153,6 +157,7 @@ export const RoleManagementPage: React.FC = () => {
         const created = res.data.data;
         setRoles([...roles, created]);
         setActiveRoleForView(created);
+        toast.success(`Role baru "${roleName}" berhasil ditambahkan!`, 'Berhasil Disimpan');
       }
 
       setIsModalOpen(false);
@@ -166,12 +171,12 @@ export const RoleManagementPage: React.FC = () => {
 
   const handleDeleteRole = async (role: Role) => {
     if (role.is_system) {
-      alert('Role sistem bawaan tidak dapat dihapus.');
+      toast.warning('Role sistem bawaan tidak dapat dihapus.');
       return;
     }
 
     if (role.users_count > 0) {
-      alert(`Role "${role.name}" sedang digunakan oleh ${role.users_count} staf. Pindahkan staf terlebih dahulu.`);
+      toast.warning(`Role "${role.name}" sedang digunakan oleh ${role.users_count} staf. Pindahkan staf terlebih dahulu.`);
       return;
     }
 
@@ -181,13 +186,13 @@ export const RoleManagementPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/roles/${role.id}`);
-      const updated = roles.filter((r) => r.id !== role.id);
-      setRoles(updated);
+      setRoles(roles.filter((r) => r.id !== role.id));
       if (activeRoleForView?.id === role.id) {
-        setActiveRoleForView(updated[0] || null);
+        setActiveRoleForView(roles.find((r) => r.id !== role.id) || null);
       }
+      toast.success(`Role "${role.name}" berhasil dihapus.`, 'Data Dihapus');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus role.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus role.');
     }
   };
 

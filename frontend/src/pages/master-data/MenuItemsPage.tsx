@@ -15,9 +15,11 @@ import {
   AlertCircle,
   X,
   Calculator,
+  TrendingUp,
   Percent,
   Layers
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import type { MenuItem, MenuCategory, RawMaterial } from '../../types/menu';
 
@@ -219,8 +221,10 @@ export const MenuItemsPage: React.FC = () => {
 
       if (editingItem) {
         await apiClient.put(`/tenant/menu-items/${editingItem.id}`, payload);
+        toast.success(`Item menu "${name}" beserta resep BOM berhasil diperbarui!`, 'Berhasil Disimpan');
       } else {
         await apiClient.post('/tenant/menu-items', payload);
+        toast.success(`Item menu baru "${name}" berhasil ditambahkan!`, 'Berhasil Disimpan');
       }
 
       setIsModalOpen(false);
@@ -240,9 +244,10 @@ export const MenuItemsPage: React.FC = () => {
 
     try {
       await apiClient.delete(`/tenant/menu-items/${item.id}`);
+      toast.success(`Menu "${item.name}" berhasil dihapus.`, 'Data Dihapus');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Gagal menghapus menu.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus menu.');
     }
   };
 
