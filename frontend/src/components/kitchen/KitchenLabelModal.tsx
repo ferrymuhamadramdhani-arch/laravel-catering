@@ -28,7 +28,7 @@ export const KitchenLabelModal: React.FC<KitchenLabelModalProps> = ({
       setIsLoading(true);
       setErrorMsg(null);
       apiClient
-        .get(`/production/orders/${orderId}/label`)
+        .get(`/tenant/production/orders/${orderId}/label`)
         .then((res) => {
           if (res.data?.data) {
             setLabelData(res.data.data);

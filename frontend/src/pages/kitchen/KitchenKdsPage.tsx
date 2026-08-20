@@ -37,24 +37,24 @@ export const KitchenKdsPage: React.FC = () => {
     setIsLoading(true);
     try {
       // First, get list of plans for this date
-      const res = await apiClient.get('/production/plans', {
+      const res = await apiClient.get('/tenant/production/plans', {
         params: { start_date: dateToLoad, end_date: dateToLoad },
       });
 
       const plans = res.data?.data?.data || [];
       if (plans.length > 0) {
         const planId = plans[0].id;
-        const detailRes = await apiClient.get(`/production/plans/${planId}`);
+        const detailRes = await apiClient.get(`/tenant/production/plans/${planId}`);
         if (detailRes.data?.data) {
           setDetailData(detailRes.data.data);
         }
       } else {
         // Auto-generate plan for the selected date so newly created orders appear immediately
-        const syncRes = await apiClient.post('/production/plans/generate', {
+        const syncRes = await apiClient.post('/tenant/production/plans/generate', {
           plan_date: dateToLoad,
         });
         if (syncRes.data?.data?.plan?.id) {
-          const detailRes = await apiClient.get(`/production/plans/${syncRes.data.data.plan.id}`);
+          const detailRes = await apiClient.get(`/tenant/production/plans/${syncRes.data.data.plan.id}`);
           if (detailRes.data?.data) {
             setDetailData(detailRes.data.data);
           }
@@ -77,11 +77,11 @@ export const KitchenKdsPage: React.FC = () => {
   const handleGeneratePlan = async () => {
     setIsGenerating(true);
     try {
-      const res = await apiClient.post('/production/plans/generate', {
+      const res = await apiClient.post('/tenant/production/plans/generate', {
         plan_date: selectedDate,
       });
       if (res.data?.data?.plan?.id) {
-        const detailRes = await apiClient.get(`/production/plans/${res.data.data.plan.id}`);
+        const detailRes = await apiClient.get(`/tenant/production/plans/${res.data.data.plan.id}`);
         if (detailRes.data?.data) {
           setDetailData(detailRes.data.data);
         }
@@ -107,7 +107,7 @@ export const KitchenKdsPage: React.FC = () => {
     if (!nextStage) return;
 
     try {
-      const res = await apiClient.patch(`/production/tasks/${task.id}/stage`, {
+      const res = await apiClient.patch(`/tenant/production/tasks/${task.id}/stage`, {
         stage: nextStage,
       });
       if (res.data?.data) {
@@ -134,7 +134,7 @@ export const KitchenKdsPage: React.FC = () => {
 
     setIsCompleting(true);
     try {
-      const res = await apiClient.post(`/production/plans/${detailData.plan.id}/complete`);
+      const res = await apiClient.post(`/tenant/production/plans/${detailData.plan.id}/complete`);
       if (res.data?.success) {
         alert('Produksi selesai! Seluruh pesanan telah berstatus Siap dan stok bahan baku telah terpotong.');
         loadPlanForDate(selectedDate);
