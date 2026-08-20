@@ -15,10 +15,11 @@ import {
   Trash2,
   AlertCircle,
   X,
-  TrendingDown
+  TrendingDown,
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { RawMaterial } from '../../types/menu';
 
 const CATEGORIES = [
@@ -353,121 +354,119 @@ export const RawMaterialsPage: React.FC = () => {
       </Card>
 
       {/* MODAL TAMBAH / EDIT BAHAN BAKU */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-lg">
-                {editingMaterial ? `Edit Bahan Baku: ${editingMaterial.name}` : 'Tambah Bahan Baku Baru'}
-              </h3>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+      <ModalPortal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-slate-100 my-auto">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <h3 className="font-bold text-slate-900 text-lg">
+              {editingMaterial ? `Edit Bahan Baku: ${editingMaterial.name}` : 'Tambah Bahan Baku Baru'}
+            </h3>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-slate-400 hover:text-slate-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {formError && (
+            <div className="p-3 my-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+              {formError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+            <Input
+              label="Nama Bahan Baku"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Daging Ayam Fillet Dada"
+              required
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Kode SKU (Opsional)"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="RM-AYAM-01"
+              />
+
+              <Select
+                label="Kategori Bahan"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
               >
-                <X className="w-5 h-5" />
-              </button>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </Select>
             </div>
 
-            {formError && (
-              <div className="p-3 my-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
-                {formError}
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Select
+                label="Satuan Ukur Standar"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+              >
+                {UNITS.map((u) => (
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
+                ))}
+              </Select>
 
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <Input
-                label="Nama Bahan Baku"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Contoh: Daging Ayam Fillet Dada"
+                label={`Harga Beli Standar (Rp/${unit})`}
+                type="number"
+                value={defaultPrice}
+                onChange={(e) => setDefaultPrice(e.target.value)}
+                placeholder="48000"
                 required
               />
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Kode SKU (Opsional)"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="RM-AYAM-01"
-                />
-
-                <Select
-                  label="Kategori Bahan"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Select
-                  label="Satuan Ukur Standar"
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                >
-                  {UNITS.map((u) => (
-                    <option key={u} value={u}>
-                      {u}
-                    </option>
-                  ))}
-                </Select>
-
-                <Input
-                  label={`Harga Beli Standar (Rp/${unit})`}
-                  type="number"
-                  value={defaultPrice}
-                  onChange={(e) => setDefaultPrice(e.target.value)}
-                  placeholder="48000"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label={`Stok Awal (${unit})`}
-                  type="number"
-                  value={currentStock}
-                  onChange={(e) => setCurrentStock(e.target.value)}
-                  placeholder="0"
-                />
-
-                <Input
-                  label={`Batas Stok Minimum (${unit})`}
-                  type="number"
-                  value={minStock}
-                  onChange={(e) => setMinStock(e.target.value)}
-                  placeholder="0"
-                />
-              </div>
-
+            <div className="grid grid-cols-2 gap-3">
               <Input
-                label="Catatan / Info Supplier (Opsional)"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Contoh: Supplier Pasar Induk Kramat Jati"
+                label={`Stok Awal (${unit})`}
+                type="number"
+                value={currentStock}
+                onChange={(e) => setCurrentStock(e.target.value)}
+                placeholder="0"
               />
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Batal
-                </Button>
-                <Button type="submit" isLoading={isSubmitting}>
-                  {editingMaterial ? 'Simpan Perubahan' : 'Tambah Bahan'}
-                </Button>
-              </div>
-            </form>
-          </div>
+              <Input
+                label={`Batas Stok Minimum (${unit})`}
+                type="number"
+                value={minStock}
+                onChange={(e) => setMinStock(e.target.value)}
+                placeholder="0"
+              />
+            </div>
+
+            <Input
+              label="Catatan / Info Supplier (Opsional)"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Contoh: Supplier Pasar Induk Kramat Jati"
+            />
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Batal
+              </Button>
+              <Button type="submit" isLoading={isSubmitting}>
+                {editingMaterial ? 'Simpan Perubahan' : 'Tambah Bahan'}
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

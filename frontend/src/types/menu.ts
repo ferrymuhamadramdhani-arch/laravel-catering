@@ -73,7 +73,9 @@ export interface MenuPackage {
   calculated_hpp: number | string;
   margin_percentage: number | string;
   min_order_quantity: number;
+  portion_unit?: string;
   is_active: boolean;
   package_items?: MenuPackageItem[];
+  items?: MenuPackageItem[];
   created_at: string;
 }

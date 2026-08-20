@@ -4,7 +4,7 @@ import {
   getDistrictsByCity,
   type RegionDistrict,
 } from '../../data/indonesiaRegions';
-import { MapPin, ChevronDown, Check } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface RegionSelectProps {
   city: string;

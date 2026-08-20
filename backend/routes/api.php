@@ -19,6 +19,20 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
     });
 
+    // Public Customer Portal Routes (Customer-facing Web)
+    Route::prefix('public')->group(function () {
+        Route::get('/tenant/{slug}/catalog', [\App\Http\Controllers\Api\V1\PublicCustomerPortalController::class, 'catalog']);
+        Route::post('/tenant/{slug}/check-capacity', [\App\Http\Controllers\Api\V1\PublicCustomerPortalController::class, 'checkCapacity']);
+        Route::post('/tenant/{slug}/checkout', [\App\Http\Controllers\Api\V1\PublicCustomerPortalController::class, 'checkout']);
+        Route::get('/orders/track/{trackingNumber}', [\App\Http\Controllers\Api\V1\PublicCustomerPortalController::class, 'trackOrder']);
+
+        // Payment Gateway & Webhooks (Midtrans / QRIS / VA)
+        Route::post('/payment-gateway/create-token', [\App\Http\Controllers\Api\V1\PaymentGatewayController::class, 'createPaymentToken']);
+        Route::post('/webhooks/payment-gateway', [\App\Http\Controllers\Api\V1\PaymentGatewayController::class, 'handleWebhook']);
+        Route::post('/webhooks/whatsapp', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'handleWebhook']);
+        Route::post('/payment-gateway/simulate-pay', [\App\Http\Controllers\Api\V1\PaymentGatewayController::class, 'simulatePayment']);
+    });
+
     // Protected Tenant Routes
     Route::middleware(['auth:sanctum', IdentifyTenant::class])->group(function () {
         // Auth / Session
@@ -108,6 +122,101 @@ Route::prefix('v1')->group(function () {
             Route::put('/orders/{id}', [\App\Http\Controllers\Api\V1\OrderController::class, 'update']);
             Route::patch('/orders/{id}/status', [\App\Http\Controllers\Api\V1\OrderController::class, 'updateStatus']);
             Route::delete('/orders/{id}', [\App\Http\Controllers\Api\V1\OrderController::class, 'destroy']);
+
+            // Inventory & Stock Management (Modul Inventaris Bahan Baku Dasar)
+            Route::get('/inventory/summary', [\App\Http\Controllers\Api\V1\InventoryController::class, 'summary']);
+            Route::get('/inventory/low-stock', [\App\Http\Controllers\Api\V1\InventoryController::class, 'lowStock']);
+            Route::get('/inventory/ledgers', [\App\Http\Controllers\Api\V1\InventoryController::class, 'ledgers']);
+            Route::post('/inventory/stock-in', [\App\Http\Controllers\Api\V1\InventoryController::class, 'stockIn']);
+            Route::post('/inventory/stock-out', [\App\Http\Controllers\Api\V1\InventoryController::class, 'stockOut']);
+            Route::post('/inventory/adjust', [\App\Http\Controllers\Api\V1\InventoryController::class, 'adjust']);
+
+            // Goods Receipts (Penerimaan Barang PO)
+            Route::get('/inventory/goods-receipts', [\App\Http\Controllers\Api\V1\GoodsReceiptController::class, 'index']);
+            Route::get('/inventory/goods-receipts/{id}', [\App\Http\Controllers\Api\V1\GoodsReceiptController::class, 'show']);
+            Route::post('/inventory/goods-receipts/{id}/receive', [\App\Http\Controllers\Api\V1\GoodsReceiptController::class, 'receive']);
+
+            // Procurement (Purchase Orders)
+            Route::get('/purchase-orders/suggestions', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'suggestions']);
+            Route::post('/purchase-orders/from-suggestions', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'createFromSuggestions']);
+            Route::get('/purchase-orders/price-history', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'priceHistory']);
+            Route::get('/purchase-orders', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'index']);
+            Route::post('/purchase-orders', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'store']);
+            Route::get('/purchase-orders/{id}', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'show']);
+            Route::patch('/purchase-orders/{id}/approve', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'approve']);
+            Route::patch('/purchase-orders/{id}/cancel', [\App\Http\Controllers\Api\V1\PurchaseOrderController::class, 'cancel']);
+
+            // Invoices & Finance (Keuangan & Invoicing)
+            Route::get('/invoices', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'index']);
+            Route::post('/invoices', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'store']);
+            Route::get('/invoices/{id}', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'show']);
+            Route::delete('/invoices/{id}', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'destroy']);
+            Route::get('/finance/summary', [\App\Http\Controllers\Api\V1\InvoiceController::class, 'summary']);
+
+            // Payments (Pencatatan Pembayaran)
+            Route::get('/payments', [\App\Http\Controllers\Api\V1\PaymentController::class, 'index']);
+            Route::post('/invoices/{invoiceId}/payments', [\App\Http\Controllers\Api\V1\PaymentController::class, 'store']);
+
+            // Production & Kitchen System (Dapur & KDS)
+            Route::get('/production/plans', [\App\Http\Controllers\Api\V1\ProductionController::class, 'index']);
+            Route::post('/production/plans/generate', [\App\Http\Controllers\Api\V1\ProductionController::class, 'generate']);
+            Route::get('/production/plans/{id}', [\App\Http\Controllers\Api\V1\ProductionController::class, 'show']);
+            Route::patch('/production/tasks/{id}/stage', [\App\Http\Controllers\Api\V1\ProductionController::class, 'updateTaskStage']);
+            Route::post('/production/plans/{id}/complete', [\App\Http\Controllers\Api\V1\ProductionController::class, 'completePlan']);
+            Route::get('/production/orders/{orderId}/label', [\App\Http\Controllers\Api\V1\ProductionController::class, 'getOrderLabel']);
+
+            // Deliveries & Courier System (Pengiriman & Kurir)
+            Route::get('/deliveries', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'index']);
+            Route::get('/deliveries/today', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'today']);
+            Route::get('/deliveries/routes/optimize', [\App\Http\Controllers\Api\V1\DeliveryRouteController::class, 'optimize']);
+            Route::post('/deliveries/routes/batch-assign', [\App\Http\Controllers\Api\V1\DeliveryRouteController::class, 'batchAssign']);
+            Route::get('/deliveries/routes/courier/{courierId}', [\App\Http\Controllers\Api\V1\DeliveryRouteController::class, 'courierSchedule']);
+            Route::post('/deliveries/assign', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'assign']);
+            Route::get('/deliveries/{id}', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'show']);
+            Route::patch('/deliveries/{id}/status', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'updateStatus']);
+            Route::post('/deliveries/{id}/proof', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'submitProof']);
+            Route::post('/deliveries/sync-offline', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'syncOffline']);
+
+            // WhatsApp Official Notification Hub
+            Route::get('/whatsapp/templates', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'templates']);
+            Route::put('/whatsapp/templates/{id}', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'updateTemplate']);
+            Route::get('/whatsapp/logs', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'logs']);
+            Route::post('/whatsapp/send-manual', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'sendManual']);
+            Route::post('/whatsapp/test', [\App\Http\Controllers\Api\V1\WhatsAppController::class, 'testSend']);
+
+            // Advanced Analytics & Demand Forecasting (Fase 3.1)
+            Route::get('/analytics/overview', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'overview']);
+            Route::get('/analytics/menus', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'menus']);
+            Route::get('/analytics/customers', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'customers']);
+            Route::get('/analytics/forecasting', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'forecasting']);
+            Route::get('/analytics/financial-report', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'financialReport']);
+            Route::get('/analytics/export', [\App\Http\Controllers\Api\V1\AnalyticsController::class, 'exportCsv']);
+
+            // Multi-Cabang (Multi-Location) & Stock Transfers (Fase 3.2)
+            Route::get('/branches', [\App\Http\Controllers\Api\V1\BranchController::class, 'index']);
+            Route::post('/branches', [\App\Http\Controllers\Api\V1\BranchController::class, 'store']);
+            Route::get('/branches/{id}', [\App\Http\Controllers\Api\V1\BranchController::class, 'show']);
+            Route::put('/branches/{id}', [\App\Http\Controllers\Api\V1\BranchController::class, 'update']);
+            Route::delete('/branches/{id}', [\App\Http\Controllers\Api\V1\BranchController::class, 'destroy']);
+
+            Route::get('/stock-transfers', [\App\Http\Controllers\Api\V1\StockTransferController::class, 'index']);
+            Route::post('/stock-transfers', [\App\Http\Controllers\Api\V1\StockTransferController::class, 'store']);
+            Route::post('/stock-transfers/{id}/ship', [\App\Http\Controllers\Api\V1\StockTransferController::class, 'ship']);
+            Route::post('/stock-transfers/{id}/receive', [\App\Http\Controllers\Api\V1\StockTransferController::class, 'receive']);
+            Route::post('/stock-transfers/{id}/cancel', [\App\Http\Controllers\Api\V1\StockTransferController::class, 'cancel']);
+
+            // Dashboard Metrics
+            Route::get('/dashboard/metrics', [\App\Http\Controllers\Api\V1\DashboardController::class, 'metrics']);
+        });
+
+        // Super Admin SaaS Management (Fase 3.4)
+        Route::prefix('super-admin')->middleware(['auth:sanctum'])->group(function () {
+            Route::get('/metrics', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'metrics']);
+            Route::get('/tenants', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'tenants']);
+            Route::patch('/tenants/{id}/status', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'updateTenantStatus']);
+            Route::post('/tenants/{id}/plan', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'assignPlan']);
+            Route::get('/plans', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'plans']);
+            Route::put('/plans/{id}', [\App\Http\Controllers\Api\V1\SuperAdminController::class, 'updatePlan']);
         });
 
         // Health Check / Ping

@@ -20,17 +20,21 @@ import {
   FolderKanban,
   Tag,
   Package,
-  PanelLeftClose,
-  PanelLeftOpen,
   UserSearch,
   Factory,
   MapPinned,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ClipboardCheck,
+  History,
+  MessageSquare,
+  TrendingUp,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const { user, currentTenant, logout } = useAuthStore();
@@ -43,26 +47,20 @@ export const AdminLayout: React.FC = () => {
   };
 
   const isMasterDataActive = location.pathname.startsWith('/master-data');
+  const isInventoryActive = location.pathname.startsWith('/inventory');
   const isUserMgmtActive = location.pathname.startsWith('/users') || location.pathname.startsWith('/roles');
 
   // Default dropdowns to closed/hidden unless currently on active sub-route
   const [masterDataOpen, setMasterDataOpen] = useState(isMasterDataActive);
+  const [inventoryOpen, setInventoryOpen] = useState(isInventoryActive);
   const [userMgmtOpen, setUserMgmtOpen] = useState(isUserMgmtActive);
 
-  const toggleSidebar = () => {
-    if (window.innerWidth < 768) {
-      setSidebarOpen(!sidebarOpen);
-    } else {
-      setSidebarCollapsed(!sidebarCollapsed);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-slate-50 flex font-sans">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-xs md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -71,14 +69,11 @@ export const AdminLayout: React.FC = () => {
       <aside
         className={cn(
           'fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-200 flex flex-col transition-all duration-300 ease-in-out md:static md:h-screen md:sticky md:top-0',
-          // Mobile state
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
-          // Desktop collapsed state
-          sidebarCollapsed ? 'md:hidden md:w-0 md:overflow-hidden' : 'md:w-64'
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         )}
       >
-        {/* Brand Header with Hide Sidebar Button */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-slate-800">
+        {/* Brand Header */}
+        <div className="h-16 flex items-center px-5 border-b border-slate-800">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="w-9 h-9 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-amber-500/20 flex-shrink-0">
               C
@@ -90,15 +85,6 @@ export const AdminLayout: React.FC = () => {
               </span>
             </div>
           </div>
-
-          {/* Toggle / Hide Sidebar Button */}
-          <button
-            onClick={toggleSidebar}
-            title="Sembunyikan Sidebar"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-          >
-            <PanelLeftClose className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Tenant Info Card */}
@@ -292,10 +278,133 @@ export const AdminLayout: React.FC = () => {
               <ShoppingBag className="w-4 h-4" />
               <span>Pesanan</span>
             </div>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-              MVP
-            </span>
           </NavLink>
+
+          {/* Procurement (Purchase Orders) */}
+          <NavLink
+            to="/procurement/purchase-orders"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <ClipboardCheck className="w-4 h-4" />
+              <span>Pengadaan (PO)</span>
+            </div>
+          </NavLink>
+
+          {/* Inventory & Stock Section (Collapsible Group) */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setInventoryOpen(!inventoryOpen)}
+              className={cn(
+                'w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isInventoryActive
+                  ? 'text-amber-400 bg-slate-800/80 font-semibold'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <Boxes className="w-4 h-4" />
+                <span>Inventori &amp; Stok</span>
+              </div>
+              <ChevronDown
+                className={cn('w-3.5 h-3.5 transition-transform duration-200', inventoryOpen ? 'rotate-180' : '')}
+              />
+            </button>
+
+            {inventoryOpen && (
+              <div className="pl-9 pr-2 py-1 space-y-1 border-l-2 border-slate-800 ml-4 mt-1">
+                <NavLink
+                  to="/inventory/stock-in"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <ArrowDownLeft className="w-3.5 h-3.5" />
+                  <span>Stok Masuk (Penerimaan)</span>
+                </NavLink>
+
+                <NavLink
+                  to="/inventory/stock-out"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <span>Stok Keluar (Pemakaian)</span>
+                </NavLink>
+
+                <NavLink
+                  to="/inventory/opname"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                  <span>Stock Opname (Audit)</span>
+                </NavLink>
+
+                <NavLink
+                  to="/inventory/ledgers"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>Riwayat Mutasi (Ledger)</span>
+                </NavLink>
+
+                {/* Inter-branch Transfer */}
+                <NavLink
+                  to="/inventory/transfers"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  <span>Mutasi Antar Cabang</span>
+                </NavLink>
+              </div>
+            )}
+          </div>
 
           {/* Kitchen */}
           <NavLink
@@ -312,7 +421,7 @@ export const AdminLayout: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <ChefHat className="w-4 h-4" />
-              <span>Produksi Dapur</span>
+              <span>Dapur Produksi (KDS)</span>
             </div>
           </NavLink>
 
@@ -331,7 +440,26 @@ export const AdminLayout: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Truck className="w-4 h-4" />
-              <span>Pengiriman & Kurir</span>
+              <span>Pengiriman &amp; Kurir</span>
+            </div>
+          </NavLink>
+
+          {/* Branches / Multi-location */}
+          <NavLink
+            to="/branches"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <Building2 className="w-4 h-4 text-amber-400" />
+              <span>Cabang &amp; Dapur Satelit</span>
             </div>
           </NavLink>
 
@@ -350,7 +478,26 @@ export const AdminLayout: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <Receipt className="w-4 h-4" />
-              <span>Keuangan & Invoice</span>
+              <span>Keuangan &amp; Invoice</span>
+            </div>
+          </NavLink>
+
+          {/* Analytics & Forecasting */}
+          <NavLink
+            to="/analytics"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-4 h-4 text-amber-400" />
+              <span>Analitik &amp; Forecasting</span>
             </div>
           </NavLink>
 
@@ -412,9 +559,29 @@ export const AdminLayout: React.FC = () => {
             )}
           </div>
 
+          {/* WhatsApp Official Notifications */}
+          <NavLink
+            to="/whatsapp"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-amber-600 text-white shadow-sm shadow-amber-600/30'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <MessageSquare className="w-4 h-4 text-emerald-400" />
+              <span>WhatsApp API Hub</span>
+            </div>
+          </NavLink>
+
           {/* Settings */}
           <NavLink
             to="/settings"
+            end
             onClick={() => setSidebarOpen(false)}
             className={({ isActive }) =>
               cn(
@@ -430,6 +597,25 @@ export const AdminLayout: React.FC = () => {
               <span>Pengaturan Bisnis</span>
             </div>
           </NavLink>
+
+          {/* Super Admin Panel */}
+          <NavLink
+            to="/super-admin"
+            onClick={() => setSidebarOpen(false)}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center justify-between px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                  : 'text-indigo-400 hover:bg-slate-800 hover:text-indigo-200'
+              )
+            }
+          >
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-4 h-4 text-indigo-400" />
+              <span className="font-semibold">Super Admin SaaS</span>
+            </div>
+          </NavLink>
         </nav>
       </aside>
 
@@ -438,17 +624,12 @@ export const AdminLayout: React.FC = () => {
         {/* Top Header */}
         <header className="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 shadow-sm shadow-slate-100">
           <div className="flex items-center gap-3">
-            {/* Sidebar Toggle Button (Visible on Mobile & when Desktop is Collapsed) */}
+            {/* Mobile Sidebar Menu Button */}
             <button
-              onClick={toggleSidebar}
-              title={sidebarCollapsed ? 'Tampilkan Menu Sidebar' : 'Sembunyikan Menu Sidebar'}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors md:hidden"
             >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen className="w-5 h-5 text-amber-600" />
-              ) : (
-                <MenuIcon className="w-5 h-5" />
-              )}
+              <MenuIcon className="w-5 h-5" />
             </button>
 
             <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500">

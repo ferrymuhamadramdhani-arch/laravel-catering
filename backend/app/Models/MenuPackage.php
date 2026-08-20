@@ -41,4 +41,9 @@ class MenuPackage extends Model
     {
         return $this->hasMany(MenuPackageItem::class);
     }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(MenuPackageItem::class);
+    }
 }

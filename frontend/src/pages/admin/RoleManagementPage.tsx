@@ -16,10 +16,9 @@ import {
   X,
   AlertCircle,
   KeyRound,
-  AlertTriangle,
-  UserCheck
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { Role, PermissionGroup } from '../../types/role';
 
 export const RoleManagementPage: React.FC = () => {
@@ -420,9 +419,8 @@ export const RoleManagementPage: React.FC = () => {
       </div>
 
       {/* MODAL BUILDER ROLE & PERMISSION MATRIX */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col p-6 shadow-2xl border border-slate-100">
+      <ModalPortal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col p-6 shadow-2xl border border-slate-100 my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
@@ -565,8 +563,7 @@ export const RoleManagementPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

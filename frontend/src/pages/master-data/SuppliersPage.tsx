@@ -15,7 +15,6 @@ import {
   X,
   Phone,
   Mail,
-  MapPin,
   FileText,
   User,
   CreditCard,
@@ -23,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
 import { RegionSelect } from '../../components/ui/RegionSelect';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { Supplier } from '../../types/crm';
 
 const PAYMENT_TERMS = ['COD', 'NET-7', 'NET-14', 'NET-30', 'NET-45', 'NET-60'];
@@ -264,21 +264,15 @@ export const SuppliersPage: React.FC = () => {
                 suppliers.map((s) => (
                   <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 font-bold text-xs">
-                          <Factory className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 leading-snug">{s.name}</p>
-                          {s.city ? (
-                            <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3 h-3" />
-                              {s.city}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-slate-400 block mt-0.5">Vendor Bahan</span>
-                          )}
-                        </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 leading-snug">{s.name}</p>
+                        {s.city ? (
+                          <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                            {s.city}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 block mt-0.5">Vendor Bahan</span>
+                        )}
                       </div>
                     </td>
 
@@ -374,9 +368,8 @@ export const SuppliersPage: React.FC = () => {
       </Card>
 
       {/* MODAL TAMBAH / EDIT SUPPLIER */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <ModalPortal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <Factory className="w-5 h-5 text-amber-600" />
@@ -524,8 +517,7 @@ export const SuppliersPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

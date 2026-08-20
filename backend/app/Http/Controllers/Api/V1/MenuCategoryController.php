@@ -32,19 +32,34 @@ class MenuCategoryController extends Controller
             new OA\Response(response: 200, description: 'Daftar kategori berhasil diambil'),
         ]
     )]
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $tenant = $this->tenantContext->getTenant();
         if (!$tenant) {
             return $this->errorResponse('Tenant tidak aktif atau tidak ditemukan.', 404);
         }
 
-        $categories = MenuCategory::withCount('menuItems')
+        $query = MenuCategory::withCount('menuItems')
             ->orderBy('sort_order', 'asc')
-            ->orderBy('name', 'asc')
-            ->get();
+            ->orderBy('name', 'asc');
 
-        return $this->successResponse($categories, 'Daftar kategori menu berhasil diambil.');
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('slug', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->boolean('all')) {
+            return $this->successResponse($query->get(), 'Daftar kategori menu berhasil diambil.');
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        $paginated = $query->paginate($perPage);
+
+        return $this->paginatedResponse($paginated, 'Daftar kategori menu berhasil diambil.');
     }
 
     /**

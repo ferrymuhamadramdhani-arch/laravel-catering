@@ -2,26 +2,20 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/axios';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
 import {
   X,
   Plus,
   Trash2,
-  Calendar,
-  Clock,
-  MapPin,
-  Building2,
   User,
   ShoppingBag,
-  Package,
   UtensilsCrossed,
-  Sparkles,
   TrendingUp,
   CreditCard,
   ChevronDown,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { Customer, DeliveryArea } from '../../types/crm';
 import type { MenuItem, MenuPackage } from '../../types/menu';
 
@@ -66,7 +60,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   const [packages, setPackages] = useState<MenuPackage[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
-  const [isLoadingMaster, setIsLoadingMaster] = useState(true);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +105,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     if (!isOpen) return;
 
     const fetchMasterData = async () => {
-      setIsLoadingMaster(true);
       try {
         const [custRes, pkgRes, menuRes, areaRes] = await Promise.all([
           apiClient.get('/tenant/customers?all=1'),
@@ -127,8 +119,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
         setDeliveryAreas(areaRes.data.data || []);
       } catch (err: any) {
         console.error('Error fetching order master data:', err);
-      } finally {
-        setIsLoadingMaster(false);
       }
     };
 
@@ -303,10 +293,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    <ModalPortal isOpen={isOpen} onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-100 my-auto overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 flex-shrink-0">
@@ -836,6 +824,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </ModalPortal>
   );
 };

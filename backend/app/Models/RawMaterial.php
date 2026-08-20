@@ -43,4 +43,9 @@ class RawMaterial extends Model
     {
         return $this->belongsTo(Supplier::class);
     }
+
+    public function stockLedgers(): HasMany
+    {
+        return $this->hasMany(StockLedger::class);
+    }
 }

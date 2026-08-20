@@ -68,6 +68,10 @@ export interface Order {
   total_hpp: number | string;
   down_payment_amount: number | string;
   payment_status: PaymentStatus;
+  payment_gateway_provider?: string | null;
+  payment_gateway_ref?: string | null;
+  snap_token?: string | null;
+  tracking_code?: string | null;
   status: OrderStatus;
   cancellation_reason?: string | null;
   notes?: string | null;

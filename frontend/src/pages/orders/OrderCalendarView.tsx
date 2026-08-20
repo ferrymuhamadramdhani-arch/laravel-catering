@@ -8,12 +8,10 @@ import {
   ChevronRight,
   Calendar,
   Clock,
-  ShoppingBag,
-  Users,
   ChefHat,
-  Eye,
+  X,
 } from 'lucide-react';
-import type { CalendarDaySummary, Order, OrderStatus } from '../../types/order';
+import type { CalendarDaySummary, OrderStatus } from '../../types/order';
 
 interface OrderCalendarViewProps {
   onSelectOrder: (orderId: number) => void;
@@ -50,14 +48,12 @@ const STATUS_COLOR_MAP: Record<OrderStatus, string> = {
 export const OrderCalendarView: React.FC<OrderCalendarViewProps> = ({ onSelectOrder }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarData, setCalendarData] = useState<Record<string, CalendarDaySummary>>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
   const fetchCalendar = useCallback(async () => {
-    setIsLoading(true);
     try {
       const res = await apiClient.get('/tenant/orders/calendar', {
         params: {
@@ -68,8 +64,6 @@ export const OrderCalendarView: React.FC<OrderCalendarViewProps> = ({ onSelectOr
       setCalendarData(res.data.data?.days || {});
     } catch (err: any) {
       console.error('Fetch calendar error:', err);
-    } finally {
-      setIsLoading(false);
     }
   }, [currentMonth, currentYear]);
 

@@ -15,10 +15,10 @@ import {
   X,
   Truck,
   Clock,
-  ShoppingCart,
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
 import { RegionSelect } from '../../components/ui/RegionSelect';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { DeliveryArea } from '../../types/crm';
 
 const formatCurrency = (val: number | string) =>
@@ -270,20 +270,15 @@ export const DeliveryAreasPage: React.FC = () => {
                 areas.map((a) => (
                   <tr key={a.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 font-bold text-xs">
-                          <MapPin className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 leading-snug">{a.name}</p>
-                          {a.notes ? (
-                            <span className="text-xs text-slate-400 block mt-0.5 line-clamp-1 italic">
-                              "{a.notes}"
-                            </span>
-                          ) : (
-                            <span className="text-xs text-slate-400 block mt-0.5">Zona Pengiriman</span>
-                          )}
-                        </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 leading-snug">{a.name}</p>
+                        {a.notes ? (
+                          <span className="text-xs text-slate-400 block mt-0.5 line-clamp-1 italic">
+                            "{a.notes}"
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 block mt-0.5">Zona Pengiriman</span>
+                        )}
                       </div>
                     </td>
 
@@ -365,9 +360,8 @@ export const DeliveryAreasPage: React.FC = () => {
       </Card>
 
       {/* MODAL TAMBAH / EDIT AREA PENGIRIMAN */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <ModalPortal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-amber-600" />
@@ -481,8 +475,7 @@ export const DeliveryAreasPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };

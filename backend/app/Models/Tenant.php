@@ -59,4 +59,20 @@ class Tenant extends Model
     {
         return $this->hasMany(TenantUser::class);
     }
+
+    /**
+     * Active subscription of this tenant.
+     */
+    public function subscription()
+    {
+        return $this->hasOne(TenantSubscription::class)->latestOfMany();
+    }
+
+    /**
+     * All subscriptions history.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(TenantSubscription::class);
+    }
 }

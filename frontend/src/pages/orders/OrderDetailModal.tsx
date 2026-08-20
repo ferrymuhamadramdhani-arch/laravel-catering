@@ -2,13 +2,10 @@ import React, { useState } from 'react';
 import apiClient from '../../api/axios';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { Card } from '../../components/ui/Card';
 import {
   X,
   Calendar,
-  Clock,
   MapPin,
-  Building2,
   User,
   ShoppingBag,
   Package,
@@ -18,14 +15,17 @@ import {
   CheckCircle2,
   AlertTriangle,
   History,
-  TrendingUp,
   CreditCard,
-  Phone,
   ArrowRight,
   FileText,
+  Receipt,
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { Order, OrderStatus } from '../../types/order';
+import type { Invoice } from '../../types/finance';
+import { InvoiceDetailModal } from '../finance/InvoiceDetailModal';
+import { RecordPaymentModal } from '../finance/RecordPaymentModal';
 
 interface OrderDetailModalProps {
   order: Order | null;
@@ -144,11 +144,42 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   const [cancelReason, setCancelReason] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
 
+  // Invoice & Payment state
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isInvoiceDetailOpen, setIsInvoiceDetailOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isLoadingInvoice, setIsLoadingInvoice] = useState(false);
+
   if (!isOpen || !order) return null;
+
+  const handleFetchOrGenerateInvoice = async () => {
+    setIsLoadingInvoice(true);
+    try {
+      const res = await apiClient.get('/tenant/invoices', { params: { order_id: order.id } });
+      if (res.data?.data && res.data.data.length > 0) {
+        const inv = res.data.data[0];
+        const fullRes = await apiClient.get(`/tenant/invoices/${inv.id}`);
+        setSelectedInvoice(fullRes.data?.data || inv);
+        setIsInvoiceDetailOpen(true);
+      } else {
+        const createRes = await apiClient.post('/tenant/invoices', {
+          order_id: order.id,
+          invoice_type: 'full',
+        });
+        toast.success(`Faktur Invoice baru berhasil diterbitkan untuk pesanan ${order.order_number}!`, 'Faktur Diterbitkan');
+        setSelectedInvoice(createRes.data?.data);
+        setIsInvoiceDetailOpen(true);
+      }
+    } catch (err: any) {
+      console.error('Invoice error:', err);
+      toast.error(err.response?.data?.message || 'Gagal memproses faktur invoice.');
+    } finally {
+      setIsLoadingInvoice(false);
+    }
+  };
 
   const currentStatus = order.status;
   const statusCfg = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.draft;
-  const StatusIcon = statusCfg.icon;
 
   const handleAdvanceStatus = async (nextStatus: OrderStatus, customNotes?: string) => {
     setActionError(null);
@@ -189,7 +220,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
   const currentStepIdx = LIFECYCLE_STEPS.indexOf(currentStatus);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    <ModalPortal isOpen={isOpen} onClose={onClose}>
       <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-slate-100 my-auto overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
@@ -206,7 +237,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   variant="outline"
                   className={`${statusCfg.bg} ${statusCfg.text} ${statusCfg.border} font-semibold text-xs`}
                 >
-                  <StatusIcon className="w-3.5 h-3.5 mr-1 inline" />
                   {statusCfg.label}
                 </Badge>
               </div>
@@ -525,6 +555,19 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                     </span>
                   </div>
                 </div>
+
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFetchOrGenerateInvoice}
+                    isLoading={isLoadingInvoice}
+                    className="w-full gap-1.5 text-xs text-slate-100 hover:text-white border-slate-700 hover:bg-slate-800"
+                  >
+                    <Receipt className="w-3.5 h-3.5 text-amber-400" /> Lihat / Terbitkan Faktur Invoice
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -566,9 +609,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                         {item.quantity} <span className="font-normal text-slate-400">{item.portion_unit}</span>
                       </td>
                       <td className="px-4 py-3 text-right">{formatCurrency(item.unit_price)}</td>
-                      <td className="px-4 py-3 text-right font-bold text-slate-900">
-                        {formatCurrency(item.subtotal_price)}
-                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-800">{formatCurrency(item.subtotal_price)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -576,88 +617,117 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Audit Trail History */}
+          {/* Audit Trail Timeline */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
               <History className="w-3.5 h-3.5 text-amber-600" /> Riwayat Perubahan Status (Audit Trail)
             </h4>
 
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
               {order.status_histories && order.status_histories.length > 0 ? (
-                <div className="relative pl-4 space-y-4 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                <div className="relative pl-6 space-y-4 border-l-2 border-slate-200">
                   {order.status_histories.map((hist) => {
-                    const toCfg = STATUS_CONFIG[hist.to_status as OrderStatus] || STATUS_CONFIG.draft;
+                    const cfg = STATUS_CONFIG[hist.to_status as OrderStatus] || STATUS_CONFIG.draft;
+                    const HistIcon = cfg.icon;
+
                     return (
-                      <div key={hist.id} className="relative text-xs">
-                        <div className="absolute -left-[19px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white" />
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-800">
-                            Status diubah ke{' '}
-                            <Badge
-                              variant="outline"
-                              className={`${toCfg.bg} ${toCfg.text} ${toCfg.border} text-[10px] font-bold`}
-                            >
-                              {toCfg.label}
-                            </Badge>
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            {formatTimeAgo(hist.created_at)}
-                          </span>
+                      <div key={hist.id} className="relative group">
+                        {/* Dot icon */}
+                        <div
+                          className={`absolute -left-[31px] top-0.5 w-6 h-6 rounded-full flex items-center justify-center text-xs ${cfg.bg} ${cfg.text} border ${cfg.border}`}
+                        >
+                          <HistIcon className="w-3 h-3" />
                         </div>
-                        <p className="text-slate-500 text-[11px] mt-0.5">
-                          Oleh: <strong className="text-slate-700">{hist.user?.name || 'Sistem'}</strong>
-                          {hist.notes ? ` • "${hist.notes}"` : ''}
-                        </p>
+
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-slate-800">{cfg.label}</span>
+                            {hist.user && (
+                              <span className="text-[10px] text-slate-400">• oleh {hist.user.name}</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-400">{formatTimeAgo(hist.created_at)}</span>
+                        </div>
+
+                        {hist.notes && (
+                          <p className="text-xs text-slate-600 mt-1 bg-white p-2 rounded-lg border border-slate-200/80 italic">
+                            "{hist.notes}"
+                          </p>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 text-center py-2">Belum ada riwayat perubahan status.</p>
+                <p className="text-xs text-slate-400 text-center py-2">Belum ada riwayat audit trail.</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Cancel Modal Prompt */}
-        {showCancelModal && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-200 space-y-4">
-              <h3 className="text-base font-bold text-red-600 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" /> Batalkan Pesanan Katering
-              </h3>
-              <p className="text-xs text-slate-600">
-                Apakah Anda yakin ingin membatalkan pesanan <strong>{order.order_number}</strong>? Harap sertakan alasan pembatalan.
-              </p>
-              <textarea
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                rows={3}
-                placeholder="Tuliskan alasan pembatalan (mis: Pelanggan mengajukan reschedule / pembatalan acara)..."
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
-                required
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowCancelModal(false)}
-                  disabled={isUpdatingStatus}
-                >
-                  Kembali
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={handleCancelOrder}
-                  isLoading={isUpdatingStatus}
-                >
-                  Konfirmasi Pembatalan
-                </Button>
-              </div>
+        {/* Cancel Confirmation Modal */}
+        <ModalPortal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)}>
+          <div className="bg-white rounded-xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-slate-100">
+            <div className="flex items-center gap-2 text-red-600 font-bold text-sm">
+              <AlertTriangle className="w-4 h-4" /> Batalkan Pesanan Ini
+            </div>
+            <p className="text-xs text-slate-600">
+              Apakah Anda yakin ingin membatalkan pesanan <strong>{order.order_number}</strong>? Harap sertakan alasan pembatalan.
+            </p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={3}
+              placeholder="Tuliskan alasan pembatalan (mis: Pelanggan mengajukan reschedule / pembatalan acara)..."
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+              required
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowCancelModal(false)}
+                disabled={isUpdatingStatus}
+              >
+                Kembali
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleCancelOrder}
+                isLoading={isUpdatingStatus}
+              >
+                Konfirmasi Pembatalan
+              </Button>
             </div>
           </div>
-        )}
+        </ModalPortal>
+
+        {/* Invoices Modals */}
+        <InvoiceDetailModal
+          isOpen={isInvoiceDetailOpen}
+          onClose={() => setIsInvoiceDetailOpen(false)}
+          invoice={selectedInvoice}
+          onOpenRecordPayment={(inv) => {
+            setIsInvoiceDetailOpen(false);
+            setSelectedInvoice(inv);
+            setIsPaymentModalOpen(true);
+          }}
+        />
+
+        <RecordPaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          invoice={selectedInvoice}
+          onSuccess={() => {
+            onStatusUpdated();
+            if (selectedInvoice) {
+              apiClient.get(`/tenant/invoices/${selectedInvoice.id}`).then((res) => {
+                if (res.data?.data) setSelectedInvoice(res.data.data);
+              });
+            }
+          }}
+        />
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-slate-100 flex justify-end bg-slate-50/50 flex-shrink-0">
@@ -666,6 +736,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           </Button>
         </div>
       </div>
-    </div>
+    </ModalPortal>
   );
 };

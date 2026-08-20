@@ -26,6 +26,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
+import { ModalPortal } from '../../components/ui/Modal';
 import { toast } from '../../stores/toastStore';
 import type { StaffUser } from '../../types/auth';
 import type { Role } from '../../types/role';
@@ -409,9 +410,8 @@ export const StaffManagementPage: React.FC = () => {
       </Card>
 
       {/* MODAL TAMBAH STAF */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-100">
+      <ModalPortal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-100 my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-lg">Tambah Staf Baru</h3>
               <button
@@ -490,13 +490,12 @@ export const StaffManagementPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </ModalPortal>
 
       {/* MODAL EDIT STAF */}
-      {isEditModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-100">
+      {selectedUser && (
+        <ModalPortal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-slate-100 my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <h3 className="font-bold text-slate-900 text-lg">Edit Staf: {selectedUser.name}</h3>
               <button
@@ -572,7 +571,7 @@ export const StaffManagementPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

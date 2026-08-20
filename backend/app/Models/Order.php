@@ -32,6 +32,11 @@ class Order extends Model
         'total_hpp',
         'down_payment_amount',
         'payment_status',
+        'payment_gateway_provider',
+        'payment_gateway_ref',
+        'snap_token',
+        'customer_ip',
+        'tracking_code',
         'status',
         'cancellation_reason',
         'notes',
@@ -75,5 +80,35 @@ class Order extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(OrderStatusHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class)->orderBy('created_at', 'desc');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->orderBy('payment_date', 'desc');
+    }
+
+    public function productionTasks(): HasMany
+    {
+        return $this->hasMany(ProductionTask::class);
+    }
+
+    public function deliveries(): HasMany
+    {
+        return $this->hasMany(Delivery::class)->orderBy('id', 'desc');
+    }
+
+    public function delivery(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Delivery::class)->latestOfMany();
+    }
+
+    public function deliveryProof(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(DeliveryProof::class);
     }
 }

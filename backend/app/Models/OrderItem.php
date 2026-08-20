@@ -46,6 +46,11 @@ class OrderItem extends Model
         return $this->belongsTo(MenuPackage::class, 'menu_package_id');
     }
 
+    public function menuPackage(): BelongsTo
+    {
+        return $this->belongsTo(MenuPackage::class, 'menu_package_id');
+    }
+
     public function menuItem(): BelongsTo
     {
         return $this->belongsTo(MenuItem::class, 'menu_item_id');

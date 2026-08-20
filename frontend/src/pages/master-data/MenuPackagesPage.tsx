@@ -15,12 +15,11 @@ import {
   Trash2,
   AlertCircle,
   X,
-  Percent,
-  TrendingUp,
   UtensilsCrossed
 } from 'lucide-react';
 import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
+import { ModalPortal } from '../../components/ui/Modal';
 import type { MenuPackage, MenuItem } from '../../types/menu';
 
 const PACKAGE_TYPES: Record<string, string> = {
@@ -345,18 +344,13 @@ export const MenuPackagesPage: React.FC = () => {
                   return (
                     <tr key={pkg.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 border border-amber-300 flex items-center justify-center flex-shrink-0 font-bold text-sm">
-                            <Package className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-900 leading-snug">{pkg.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Badge variant="outline" className="text-[10px] py-0 bg-slate-50">
-                                {PACKAGE_TYPES[pkg.package_type] || pkg.package_type}
-                              </Badge>
-                              <span className="text-xs text-slate-400">Min. {pkg.min_order_quantity} porsi</span>
-                            </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 leading-snug">{pkg.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] py-0 bg-slate-50">
+                              {PACKAGE_TYPES[pkg.package_type] || pkg.package_type}
+                            </Badge>
+                            <span className="text-xs text-slate-400">Min. {pkg.min_order_quantity} porsi</span>
                           </div>
                         </div>
                       </td>
@@ -392,7 +386,7 @@ export const MenuPackagesPage: React.FC = () => {
 
                       <td className="px-6 py-4 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${
                             marginNum >= 35
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : marginNum >= 20
@@ -400,7 +394,7 @@ export const MenuPackagesPage: React.FC = () => {
                               : 'bg-red-50 text-red-700 border-red-200'
                           }`}
                         >
-                          <Percent className="w-3 h-3" /> {marginNum.toFixed(1)}%
+                          {marginNum.toFixed(1)}%
                         </span>
                       </td>
 
@@ -442,9 +436,8 @@ export const MenuPackagesPage: React.FC = () => {
       </Card>
 
       {/* MODAL BUILDER PAKET MENU */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col p-6 shadow-2xl border border-slate-100">
+      <ModalPortal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] flex flex-col p-6 shadow-2xl border border-slate-100 my-auto">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
               <div>
                 <h3 className="font-bold text-slate-900 text-lg">
@@ -664,8 +657,7 @@ export const MenuPackagesPage: React.FC = () => {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </ModalPortal>
     </div>
   );
 };
