@@ -162,6 +162,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/production/plans/generate', [\App\Http\Controllers\Api\V1\ProductionController::class, 'generate']);
             Route::get('/production/plans/{id}', [\App\Http\Controllers\Api\V1\ProductionController::class, 'show']);
             Route::patch('/production/tasks/{id}/stage', [\App\Http\Controllers\Api\V1\ProductionController::class, 'updateTaskStage']);
+            Route::patch('/production/orders/{orderId}/advance-stage', [\App\Http\Controllers\Api\V1\ProductionController::class, 'updateOrderTasksStage']);
             Route::post('/production/plans/{id}/complete', [\App\Http\Controllers\Api\V1\ProductionController::class, 'completePlan']);
             Route::get('/production/orders/{orderId}/label', [\App\Http\Controllers\Api\V1\ProductionController::class, 'getOrderLabel']);
 

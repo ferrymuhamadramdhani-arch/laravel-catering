@@ -137,6 +137,34 @@ class ProductionController extends Controller
     }
 
     /**
+     * Batch advance all tasks of an order to a new stage.
+     */
+    public function updateOrderTasksStage(Request $request, int $orderId): JsonResponse
+    {
+        $request->validate([
+            'plan_id' => 'required|integer',
+            'stage' => 'required|in:prep,cooking,packing,qc,completed',
+        ]);
+
+        $tenant = $this->tenantContext->getTenant();
+        $user = $request->user();
+
+        $count = $this->productionService->advanceOrderTasksStage(
+            $tenant,
+            (int) $request->plan_id,
+            $orderId,
+            $request->stage,
+            $user
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Seluruh {$count} item menu pesanan berhasil dipindahkan ke tahapan '{$request->stage}'.",
+            'affected_tasks_count' => $count,
+        ]);
+    }
+
+    /**
      * Mark entire plan as completed & auto-deduct inventory.
      */
     public function completePlan(Request $request, int $id): JsonResponse

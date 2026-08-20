@@ -11,7 +11,12 @@ import {
   Check,
   ArrowRight,
   User,
+  Clock,
+  Layers,
+  UtensilsCrossed,
+  Sparkles,
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
 import type {
   ProductionTask,
   ProductionPlanDetailResponse,
@@ -27,6 +32,9 @@ export const KitchenKdsPage: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [activeTab, setActiveTab] = useState<'kanban' | 'bom' | 'orders'>('kanban');
+
+  // Kanban View Mode: 'order' (Ringkas Per Pesanan) vs 'station' (Detail Per Komponen/Station Koki)
+  const [kanbanViewMode, setKanbanViewMode] = useState<'order' | 'station'>('order');
 
   // Label Modal
   const [labelOrderId, setLabelOrderId] = useState<number | null>(null);
@@ -84,17 +92,18 @@ export const KitchenKdsPage: React.FC = () => {
         const detailRes = await apiClient.get(`/tenant/production/plans/${res.data.data.plan.id}`);
         if (detailRes.data?.data) {
           setDetailData(detailRes.data.data);
+          toast.success('Rencana produksi dapur berhasil disinkronisasi.', 'Sinkron Berhasil');
         }
       }
     } catch (err) {
       console.error('Failed to generate plan:', err);
-      alert('Gagal menyinkronkan rencana produksi dapur.');
+      toast.error('Gagal menyinkronkan rencana produksi dapur.');
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Advance Task Stage
+  // Advance Single Task Stage
   const handleAdvanceTask = async (task: ProductionTask) => {
     const nextStages: Record<string, 'prep' | 'cooking' | 'packing' | 'qc' | 'completed'> = {
       prep: 'cooking',
@@ -124,6 +133,27 @@ export const KitchenKdsPage: React.FC = () => {
     }
   };
 
+  // Batch Advance All Tasks for an Entire Order in 1-Click
+  const handleAdvanceOrder = async (orderId: number, nextStage: string) => {
+    if (!detailData?.plan) return;
+    try {
+      const res = await apiClient.patch(`/tenant/production/orders/${orderId}/advance-stage`, {
+        plan_id: detailData.plan.id,
+        stage: nextStage,
+      });
+      toast.success(res.data?.message || 'Tahapan order berhasil diperbarui.', 'Update Batch Berhasil');
+
+      // Refresh current plan
+      const detailRes = await apiClient.get(`/tenant/production/plans/${detailData.plan.id}`);
+      if (detailRes.data?.data) {
+        setDetailData(detailRes.data.data);
+      }
+    } catch (err: any) {
+      console.error('Advance order error:', err);
+      toast.error(err.response?.data?.message || 'Gagal memajukan status order.');
+    }
+  };
+
   // Complete entire plan and auto-deduct inventory
   const handleCompletePlan = async () => {
     if (!detailData?.plan) return;
@@ -136,12 +166,12 @@ export const KitchenKdsPage: React.FC = () => {
     try {
       const res = await apiClient.post(`/tenant/production/plans/${detailData.plan.id}/complete`);
       if (res.data?.success) {
-        alert('Produksi selesai! Seluruh pesanan telah berstatus Siap dan stok bahan baku telah terpotong.');
+        toast.success('Produksi selesai! Seluruh pesanan telah berstatus Siap dan stok bahan baku telah terpotong.', 'Produksi Selesai');
         loadPlanForDate(selectedDate);
       }
     } catch (err) {
       console.error('Failed to complete plan:', err);
-      alert('Gagal menyelesaikan produksi.');
+      toast.error('Gagal menyelesaikan produksi.');
     } finally {
       setIsCompleting(false);
     }
@@ -156,25 +186,78 @@ export const KitchenKdsPage: React.FC = () => {
   const completedCount = tasks.filter((t) => t.stage === 'completed').length;
   const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
 
-  // Extract unique orders from tasks
-  const uniqueOrders = Array.from(
-    new Map(
-      tasks
-        .filter((t) => t.order)
-        .map((t) => [t.order!.id, t.order!])
-    ).values()
-  );
+  // Extract unique orders from tasks with their aggregated status
+  const uniqueOrdersMap = new Map<number, {
+    id: number;
+    order_number: string;
+    customer?: { name: string; phone?: string };
+    delivery_time?: string;
+    tasks: ProductionTask[];
+    dominant_stage: 'prep' | 'cooking' | 'packing' | 'qc' | 'completed';
+    total_quantity: number;
+  }>();
+
+  tasks.forEach((t) => {
+    if (t.order) {
+      if (!uniqueOrdersMap.has(t.order.id)) {
+        uniqueOrdersMap.set(t.order.id, {
+          id: t.order.id,
+          order_number: t.order.order_number,
+          customer: t.order.customer,
+          delivery_time: (t.order as any).delivery_time,
+          tasks: [],
+          dominant_stage: 'completed',
+          total_quantity: 0,
+        });
+      }
+      uniqueOrdersMap.get(t.order.id)!.tasks.push(t);
+    }
+  });
+
+  // Determine the dominant / lowest active stage of each order
+  const orderGroups = Array.from(uniqueOrdersMap.values()).map((og) => {
+    const stages = og.tasks.map((t) => t.stage);
+    let domStage: 'prep' | 'cooking' | 'packing' | 'qc' | 'completed' = 'completed';
+
+    if (stages.includes('prep')) {
+      domStage = 'prep';
+    } else if (stages.includes('cooking')) {
+      domStage = 'cooking';
+    } else if (stages.includes('packing')) {
+      domStage = 'packing';
+    } else if (stages.includes('qc')) {
+      domStage = 'qc';
+    } else {
+      domStage = 'completed';
+    }
+
+    const totalQty = og.tasks.reduce((sum, t) => sum + (t.stage === 'packing' ? t.quantity : 0), 0) ||
+      og.tasks[0]?.quantity || 0;
+
+    return {
+      ...og,
+      dominant_stage: domStage,
+      total_quantity: totalQty,
+    };
+  });
+
+  const uniqueOrders = orderGroups;
+
+  const ordersInPrep = orderGroups.filter((o) => o.dominant_stage === 'prep');
+  const ordersInCooking = orderGroups.filter((o) => o.dominant_stage === 'cooking');
+  const ordersInPacking = orderGroups.filter((o) => o.dominant_stage === 'packing');
+  const ordersInQc = orderGroups.filter((o) => o.dominant_stage === 'qc' || o.dominant_stage === 'completed');
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Date Navigation Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+      {/* Header & Controls */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-xs">
-            <ChefHat className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
+            <ChefHat className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <h1 className="text-xl font-black text-slate-900 flex items-center gap-2">
               Dapur Produksi &amp; KDS
               {detailData?.plan && (
                 <Badge
@@ -298,34 +381,34 @@ export const KitchenKdsPage: React.FC = () => {
               </strong>
               <span className="text-[10px] text-slate-500 block">Item bahan siap disiapkan</span>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
               🥕
             </div>
           </Card>
 
-          <Card className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between">
-            <div className="flex justify-between items-center">
-              <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wider">
-                Progres Dapur
+          <Card className="p-4 bg-white border border-slate-200 rounded-2xl flex items-center justify-between">
+            <div className="w-full">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[11px] font-bold uppercase text-slate-400 block tracking-wider">
+                  Progres Dapur
+                </span>
+                <span className="text-xs font-mono font-bold text-slate-900">{progressPercent}%</span>
+              </div>
+              <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 block mt-1">
+                {completedCount} dari {tasks.length} tahapan selesai
               </span>
-              <strong className="text-sm font-black text-slate-900 font-mono">
-                {progressPercent}%
-              </strong>
             </div>
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-slate-500 mt-1">
-              {completedCount} dari {tasks.length} tahapan selesai
-            </span>
           </Card>
         </div>
       )}
 
-      {/* Tabs Navigation */}
+      {/* Tabs Switcher */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
         <button
           onClick={() => setActiveTab('kanban')}
@@ -335,7 +418,7 @@ export const KitchenKdsPage: React.FC = () => {
               : 'text-slate-600 hover:bg-slate-100'
           }`}
         >
-          🍳 Tahapan Dapur (KDS Kanban) ({tasks.length})
+          🍳 Tahapan Dapur (KDS Kanban) ({kanbanViewMode === 'order' ? uniqueOrders.length : tasks.length})
         </button>
 
         <button
@@ -387,196 +470,490 @@ export const KitchenKdsPage: React.FC = () => {
         <>
           {/* TAB 1: KDS Kanban Board */}
           {activeTab === 'kanban' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-              {/* Column 1: Prep */}
-              <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                    1. Persiapan (Prep)
-                  </span>
-                  <Badge className="bg-blue-100 text-blue-800 text-[10px]">
-                    {prepTasks.length}
-                  </Badge>
+            <div className="space-y-4">
+              {/* Mode Switcher: Order-Centric vs Granular Station View */}
+              <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-700">Mode Kanban:</span>
+                  <div className="bg-white p-1 rounded-xl border border-slate-200 flex items-center gap-1 shadow-2xs">
+                    <button
+                      onClick={() => setKanbanViewMode('order')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        kanbanViewMode === 'order'
+                          ? 'bg-amber-500 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Layers className="w-3.5 h-3.5" /> Ringkas Per Pesanan (1-Click Batch)
+                    </button>
+                    <button
+                      onClick={() => setKanbanViewMode('station')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                        kanbanViewMode === 'station'
+                          ? 'bg-amber-500 text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <UtensilsCrossed className="w-3.5 h-3.5" /> Detail Stasiun Koki (Breakdown)
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-2.5">
-                  {prepTasks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 italic text-center py-6">
-                      Tidak ada tugas prep
-                    </p>
+                <div className="text-[11px] text-slate-500 font-medium">
+                  {kanbanViewMode === 'order' ? (
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      1 Kartu mewakili 1 Pesanan. Majukan seluruh komponen menu sekaligus dalam 1 klik!
+                    </span>
                   ) : (
-                    prepTasks.map((t) => (
-                      <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
-                        <strong className="text-xs font-bold text-slate-900 block leading-tight">
-                          {t.item_name}
-                        </strong>
-                        <div className="flex justify-between items-center text-[11px] text-slate-500">
-                          <span>
-                            Jumlah: <strong>{t.quantity} {t.portion_unit}</strong>
-                          </span>
-                          {t.order && (
-                            <span className="font-mono text-[10px]">#{t.order.order_number}</span>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAdvanceTask(t)}
-                          className="w-full text-xs font-bold py-1.5 h-auto bg-amber-500 hover:bg-amber-600 text-white rounded-lg gap-1"
-                        >
-                          Mulai Masak <ArrowRight className="w-3 h-3" />
-                        </Button>
-                      </Card>
-                    ))
+                    <span>Menampilkan rincian kartu terpisah untuk setiap menu &amp; station dapur.</span>
                   )}
                 </div>
               </div>
 
-              {/* Column 2: Cooking */}
-              <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                    2. Memasak (Cooking)
-                  </span>
-                  <Badge className="bg-amber-100 text-amber-800 text-[10px]">
-                    {cookingTasks.length}
-                  </Badge>
-                </div>
+              {/* KANBAN BOARD CONTENT */}
+              {kanbanViewMode === 'order' ? (
+                /* ORDER-CENTRIC KANBAN BOARD */
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+                  {/* Col 1: Prep */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        1. Persiapan (Prep)
+                      </span>
+                      <Badge className="bg-blue-100 text-blue-800 text-[10px]">
+                        {ordersInPrep.length} Order
+                      </Badge>
+                    </div>
 
-                <div className="space-y-2.5">
-                  {cookingTasks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 italic text-center py-6">
-                      Tidak ada tugas masak
-                    </p>
-                  ) : (
-                    cookingTasks.map((t) => (
-                      <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
-                        <strong className="text-xs font-bold text-slate-900 block leading-tight">
-                          {t.item_name}
-                        </strong>
-                        <div className="flex justify-between items-center text-[11px] text-slate-500">
-                          <span>
-                            Jumlah: <strong>{t.quantity} {t.portion_unit}</strong>
-                          </span>
-                          {t.order && (
-                            <span className="font-mono text-[10px]">#{t.order.order_number}</span>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAdvanceTask(t)}
-                          className="w-full text-xs font-bold py-1.5 h-auto bg-purple-600 hover:bg-purple-700 text-white rounded-lg gap-1"
-                        >
-                          Kirim ke Packing <ArrowRight className="w-3 h-3" />
-                        </Button>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </div>
+                    <div className="space-y-3">
+                      {ordersInPrep.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada pesanan di tahap persiapan
+                        </p>
+                      ) : (
+                        ordersInPrep.map((og) => (
+                          <Card key={og.id} className="p-3.5 bg-white border border-slate-200 rounded-xl space-y-3 shadow-2xs">
+                            <div className="flex items-start justify-between border-b border-slate-100 pb-2">
+                              <div>
+                                <strong className="text-xs font-mono font-bold text-slate-900 block">
+                                  #{og.order_number}
+                                </strong>
+                                <span className="text-[11px] text-slate-600 font-medium">
+                                  {og.customer?.name || 'Pelanggan'}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                {og.total_quantity} Porsi
+                              </span>
+                            </div>
 
-              {/* Column 3: Packing */}
-              <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                    3. Pengemasan (Packing)
-                  </span>
-                  <Badge className="bg-purple-100 text-purple-800 text-[10px]">
-                    {packingTasks.length}
-                  </Badge>
-                </div>
+                            {/* Checklist Komponen */}
+                            <div className="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px]">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Komponen Menu:</p>
+                              {og.tasks.map((t) => (
+                                <div key={t.id} className="flex items-center justify-between text-slate-700">
+                                  <span className="truncate pr-1">• {t.item_name}</span>
+                                  <span className="font-mono text-[10px] text-slate-400 shrink-0">{t.quantity}x</span>
+                                </div>
+                              ))}
+                            </div>
 
-                <div className="space-y-2.5">
-                  {packingTasks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 italic text-center py-6">
-                      Tidak ada tugas packing
-                    </p>
-                  ) : (
-                    packingTasks.map((t) => (
-                      <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
-                        <strong className="text-xs font-bold text-slate-900 block leading-tight">
-                          {t.item_name}
-                        </strong>
-                        <div className="flex justify-between items-center text-[11px] text-slate-500">
-                          <span>
-                            Kemas: <strong>{t.quantity} {t.portion_unit}</strong>
-                          </span>
-                          {t.order && (
-                            <span className="font-mono text-[10px]">#{t.order.order_number}</span>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAdvanceTask(t)}
-                          className="w-full text-xs font-bold py-1.5 h-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1"
-                        >
-                          Lolos ke QC <ArrowRight className="w-3 h-3" />
-                        </Button>
-                      </Card>
-                    ))
-                  )}
-                </div>
-              </div>
+                            {og.delivery_time && (
+                              <div className="flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-mono font-bold">
+                                <Clock className="w-3 h-3" /> Target Jam Tiba: {og.delivery_time}
+                              </div>
+                            )}
 
-              {/* Column 4: QC & Selesai */}
-              <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                    4. QC &amp; Siap Antar
-                  </span>
-                  <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">
-                    {qcTasks.length}
-                  </Badge>
-                </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceOrder(og.id, 'cooking')}
+                              className="w-full text-xs font-bold py-2 h-auto bg-amber-500 hover:bg-amber-600 text-white rounded-lg gap-1.5 shadow-2xs"
+                            >
+                              Mulai Masak Semua Menu <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
 
-                <div className="space-y-2.5">
-                  {qcTasks.length === 0 ? (
-                    <p className="text-[11px] text-slate-400 italic text-center py-6">
-                      Belum ada porsi selesai QC
-                    </p>
-                  ) : (
-                    qcTasks.map((t) => (
-                      <Card
-                        key={t.id}
-                        className={`p-3 border rounded-xl space-y-2 ${
-                          t.stage === 'completed'
-                            ? 'bg-emerald-50/70 border-emerald-200'
-                            : 'bg-white border-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <strong className="text-xs font-bold text-slate-900 block leading-tight">
-                            {t.item_name}
-                          </strong>
-                          {t.stage === 'completed' && (
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex justify-between items-center text-[11px] text-slate-500">
-                          <span>
-                            Porsi: <strong>{t.quantity} {t.portion_unit}</strong>
-                          </span>
-                          {t.order && (
-                            <span className="font-mono text-[10px]">#{t.order.order_number}</span>
-                          )}
-                        </div>
-                        {t.stage !== 'completed' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleAdvanceTask(t)}
-                            className="w-full text-xs font-bold py-1.5 h-auto bg-slate-900 hover:bg-slate-800 text-white rounded-lg gap-1"
+                  {/* Col 2: Cooking */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        2. Memasak (Cooking)
+                      </span>
+                      <Badge className="bg-amber-100 text-amber-800 text-[10px]">
+                        {ordersInCooking.length} Order
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3">
+                      {ordersInCooking.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada pesanan sedang dimasak
+                        </p>
+                      ) : (
+                        ordersInCooking.map((og) => (
+                          <Card key={og.id} className="p-3.5 bg-white border border-amber-200 rounded-xl space-y-3 shadow-2xs">
+                            <div className="flex items-start justify-between border-b border-slate-100 pb-2">
+                              <div>
+                                <strong className="text-xs font-mono font-bold text-slate-900 block">
+                                  #{og.order_number}
+                                </strong>
+                                <span className="text-[11px] text-slate-600 font-medium">
+                                  {og.customer?.name || 'Pelanggan'}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                {og.total_quantity} Porsi
+                              </span>
+                            </div>
+
+                            {/* Checklist Komponen */}
+                            <div className="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px]">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Komponen Sedang Dimasak:</p>
+                              {og.tasks.map((t) => (
+                                <div key={t.id} className="flex items-center justify-between text-slate-700">
+                                  <span className="truncate pr-1">• {t.item_name}</span>
+                                  <span className="font-mono text-[10px] text-slate-400 shrink-0">{t.quantity}x</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {og.delivery_time && (
+                              <div className="flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded font-mono font-bold">
+                                <Clock className="w-3 h-3" /> Target Jam Tiba: {og.delivery_time}
+                              </div>
+                            )}
+
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceOrder(og.id, 'packing')}
+                              className="w-full text-xs font-bold py-2 h-auto bg-purple-600 hover:bg-purple-700 text-white rounded-lg gap-1.5 shadow-2xs"
+                            >
+                              Kirim ke Packing (Kemas) <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Col 3: Packing */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                        3. Pengemasan (Packing)
+                      </span>
+                      <Badge className="bg-purple-100 text-purple-800 text-[10px]">
+                        {ordersInPacking.length} Order
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3">
+                      {ordersInPacking.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada pesanan sedang dikemas
+                        </p>
+                      ) : (
+                        ordersInPacking.map((og) => (
+                          <Card key={og.id} className="p-3.5 bg-white border border-purple-200 rounded-xl space-y-3 shadow-2xs">
+                            <div className="flex items-start justify-between border-b border-slate-100 pb-2">
+                              <div>
+                                <strong className="text-xs font-mono font-bold text-slate-900 block">
+                                  #{og.order_number}
+                                </strong>
+                                <span className="text-[11px] text-slate-600 font-medium">
+                                  {og.customer?.name || 'Pelanggan'}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200">
+                                {og.total_quantity} Porsi Box
+                              </span>
+                            </div>
+
+                            {/* Checklist Komponen */}
+                            <div className="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px]">
+                              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Item Kemasan:</p>
+                              {og.tasks.map((t) => (
+                                <div key={t.id} className="flex items-center justify-between text-slate-700">
+                                  <span className="truncate pr-1">• {t.item_name}</span>
+                                  <span className="font-mono text-[10px] text-slate-400 shrink-0">{t.quantity}x</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceOrder(og.id, 'qc')}
+                              className="w-full text-xs font-bold py-2 h-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1.5 shadow-2xs"
+                            >
+                              Lolos ke Meja QC <ArrowRight className="w-3.5 h-3.5" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Col 4: QC & Selesai */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        4. QC &amp; Siap Antar
+                      </span>
+                      <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">
+                        {ordersInQc.length} Order
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3">
+                      {ordersInQc.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Belum ada pesanan selesai QC
+                        </p>
+                      ) : (
+                        ordersInQc.map((og) => (
+                          <Card
+                            key={og.id}
+                            className={`p-3.5 border rounded-xl space-y-3 shadow-2xs ${
+                              og.dominant_stage === 'completed'
+                                ? 'bg-emerald-50/70 border-emerald-200'
+                                : 'bg-white border-slate-200'
+                            }`}
                           >
-                            Konfirmasi Lolos QC <Check className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </Card>
-                    ))
-                  )}
+                            <div className="flex items-start justify-between border-b border-slate-100 pb-2">
+                              <div>
+                                <strong className="text-xs font-mono font-bold text-slate-900 block">
+                                  #{og.order_number}
+                                </strong>
+                                <span className="text-[11px] text-slate-600 font-medium">
+                                  {og.customer?.name || 'Pelanggan'}
+                                </span>
+                              </div>
+                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            </div>
+
+                            <div className="space-y-1 bg-white/80 p-2 rounded-lg border border-slate-100 text-[11px]">
+                              <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Siap Diserahkan ke Kurir:</p>
+                              <span className="font-bold text-slate-800">{og.total_quantity} Porsi Terkemas Rapi</span>
+                            </div>
+
+                            {og.dominant_stage !== 'completed' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleAdvanceOrder(og.id, 'completed')}
+                                className="w-full text-xs font-bold py-2 h-auto bg-slate-900 hover:bg-slate-800 text-white rounded-lg gap-1.5"
+                              >
+                                Konfirmasi Lolos QC <Check className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* GRANULAR STATION / CHEF BREAKDOWN KANBAN BOARD */
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+                  {/* Column 1: Prep */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                        1. Persiapan (Prep)
+                      </span>
+                      <Badge className="bg-blue-100 text-blue-800 text-[10px]">
+                        {prepTasks.length}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {prepTasks.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada tugas prep
+                        </p>
+                      ) : (
+                        prepTasks.map((t) => (
+                          <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+                            <strong className="text-xs font-bold text-slate-900 block leading-tight">
+                              {t.item_name}
+                            </strong>
+                            <div className="flex justify-between items-center text-[11px] text-slate-500">
+                              <span>
+                                Jumlah: <strong>{t.quantity} {t.portion_unit}</strong>
+                              </span>
+                              {t.order && (
+                                <span className="font-mono text-[10px]">#{t.order.order_number}</span>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceTask(t)}
+                              className="w-full text-xs font-bold py-1.5 h-auto bg-amber-500 hover:bg-amber-600 text-white rounded-lg gap-1"
+                            >
+                              Mulai Masak <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 2: Cooking */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        2. Memasak (Cooking)
+                      </span>
+                      <Badge className="bg-amber-100 text-amber-800 text-[10px]">
+                        {cookingTasks.length}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {cookingTasks.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada tugas masak
+                        </p>
+                      ) : (
+                        cookingTasks.map((t) => (
+                          <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+                            <strong className="text-xs font-bold text-slate-900 block leading-tight">
+                              {t.item_name}
+                            </strong>
+                            <div className="flex justify-between items-center text-[11px] text-slate-500">
+                              <span>
+                                Jumlah: <strong>{t.quantity} {t.portion_unit}</strong>
+                              </span>
+                              {t.order && (
+                                <span className="font-mono text-[10px]">#{t.order.order_number}</span>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceTask(t)}
+                              className="w-full text-xs font-bold py-1.5 h-auto bg-purple-600 hover:bg-purple-700 text-white rounded-lg gap-1"
+                            >
+                              Kirim ke Packing <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 3: Packing */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
+                        3. Pengemasan (Packing)
+                      </span>
+                      <Badge className="bg-purple-100 text-purple-800 text-[10px]">
+                        {packingTasks.length}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {packingTasks.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Tidak ada tugas packing
+                        </p>
+                      ) : (
+                        packingTasks.map((t) => (
+                          <Card key={t.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+                            <strong className="text-xs font-bold text-slate-900 block leading-tight">
+                              {t.item_name}
+                            </strong>
+                            <div className="flex justify-between items-center text-[11px] text-slate-500">
+                              <span>
+                                Kemas: <strong>{t.quantity} {t.portion_unit}</strong>
+                              </span>
+                              {t.order && (
+                                <span className="font-mono text-[10px]">#{t.order.order_number}</span>
+                              )}
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => handleAdvanceTask(t)}
+                              className="w-full text-xs font-bold py-1.5 h-auto bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg gap-1"
+                            >
+                              Lolos ke QC <ArrowRight className="w-3 h-3" />
+                            </Button>
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Column 4: QC & Selesai */}
+                  <div className="bg-slate-100/70 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        4. QC &amp; Siap Antar
+                      </span>
+                      <Badge className="bg-emerald-100 text-emerald-800 text-[10px]">
+                        {qcTasks.length}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {qcTasks.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 italic text-center py-6">
+                          Belum ada porsi selesai QC
+                        </p>
+                      ) : (
+                        qcTasks.map((t) => (
+                          <Card
+                            key={t.id}
+                            className={`p-3 border rounded-xl space-y-2 ${
+                              t.stage === 'completed'
+                                ? 'bg-emerald-50/70 border-emerald-200'
+                                : 'bg-white border-slate-200'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <strong className="text-xs font-bold text-slate-900 block leading-tight">
+                                {t.item_name}
+                              </strong>
+                              {t.stage === 'completed' && (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              )}
+                            </div>
+                            <div className="flex justify-between items-center text-[11px] text-slate-500">
+                              <span>
+                                Porsi: <strong>{t.quantity} {t.portion_unit}</strong>
+                              </span>
+                              {t.order && (
+                                <span className="font-mono text-[10px]">#{t.order.order_number}</span>
+                              )}
+                            </div>
+                            {t.stage !== 'completed' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleAdvanceTask(t)}
+                                className="w-full text-xs font-bold py-1.5 h-auto bg-slate-900 hover:bg-slate-800 text-white rounded-lg gap-1"
+                              >
+                                Konfirmasi Lolos QC <Check className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </Card>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

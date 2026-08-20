@@ -264,6 +264,54 @@ class ProductionService
     }
 
     /**
+     * Advance all tasks for a specific order to the new stage in one batch operation.
+     */
+    public function advanceOrderTasksStage(Tenant $tenant, int $planId, int $orderId, string $newStage, ?User $user = null): int
+    {
+        return DB::transaction(function () use ($tenant, $planId, $orderId, $newStage, $user) {
+            $validStages = ['prep', 'cooking', 'packing', 'qc', 'completed'];
+            if (!in_array($newStage, $validStages)) {
+                throw new \InvalidArgumentException("Tahapan produksi tidak valid: {$newStage}");
+            }
+
+            $tasks = ProductionTask::where('tenant_id', $tenant->id)
+                ->where('production_plan_id', $planId)
+                ->where('order_id', $orderId)
+                ->get();
+
+            foreach ($tasks as $task) {
+                $task->stage = $newStage;
+                if ($user) {
+                    $task->assigned_to = $user->id;
+                }
+                if ($newStage === 'cooking' && !$task->started_at) {
+                    $task->started_at = now();
+                }
+                if ($newStage === 'completed') {
+                    $task->completed_at = now();
+                }
+                $task->save();
+            }
+
+            // Check if all tasks in plan are completed
+            $incompleteCount = ProductionTask::where('production_plan_id', $planId)
+                ->where('stage', '!=', 'completed')
+                ->count();
+
+            if ($incompleteCount === 0) {
+                $plan = ProductionPlan::find($planId);
+                if ($plan && $plan->status !== 'completed') {
+                    $plan->status = 'completed';
+                    $plan->completed_at = now();
+                    $plan->save();
+                }
+            }
+
+            return $tasks->count();
+        });
+    }
+
+    /**
      * Complete entire production plan & auto-deduct raw material inventory.
      */
     public function completePlanAndDeductInventory(ProductionPlan $plan, ?User $user = null): array
