@@ -27,6 +27,7 @@ import type { Order, OrderStatus } from '../../types/order';
 import { CreateOrderModal } from './CreateOrderModal';
 import { OrderDetailModal } from './OrderDetailModal';
 import { OrderCalendarView } from './OrderCalendarView';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 const STATUS_TABS: { key: string; label: string; countKey?: string }[] = [
   { key: 'all', label: 'Semua Pesanan' },
@@ -95,6 +96,8 @@ export const OrdersPage: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     setIsLoading(true);
@@ -157,20 +160,21 @@ export const OrdersPage: React.FC = () => {
     handleOpenDetailById(order.id);
   };
 
-  const handleDelete = async (order: Order) => {
-    const confirmMsg = `Hapus pesanan "${order.order_number}" (${order.customer?.name || 'Pelanggan'}) beserta seluruh data terkait?`;
-
-    if (!confirm(confirmMsg)) return;
-
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return;
+    setIsDeleting(true);
     try {
-      await apiClient.delete(`/tenant/orders/${order.id}`);
+      await apiClient.delete(`/tenant/orders/${orderToDelete.id}`);
       toast.success(
-        `Pesanan ${order.order_number} berhasil dihapus.`,
+        `Pesanan ${orderToDelete.order_number} berhasil dihapus.`,
         'Pesanan Dihapus'
       );
+      setOrderToDelete(null);
       fetchOrders();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Gagal menghapus pesanan.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -456,9 +460,9 @@ export const OrdersPage: React.FC = () => {
                                 <Eye className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => handleDelete(ord)}
+                                onClick={() => setOrderToDelete(ord)}
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                                title={ord.status === 'draft' ? 'Hapus Draft' : 'Batalkan Pesanan'}
+                                title="Hapus Pesanan"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -507,6 +511,31 @@ export const OrdersPage: React.FC = () => {
             handleOpenDetailById(selectedOrder.id);
           }
         }}
+      />
+
+      {/* CUSTOM CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={!!orderToDelete}
+        onClose={() => setOrderToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Pesanan Katering"
+        message={
+          orderToDelete ? (
+            <div>
+              <p>
+                Apakah Anda yakin ingin menghapus pesanan <strong className="text-slate-900">{orderToDelete.order_number}</strong> (
+                {orderToDelete.customer?.name || 'Pelanggan'})?
+              </p>
+              <p className="text-rose-600 mt-2 text-[11px] font-medium bg-rose-50 p-2 rounded-lg border border-rose-100">
+                ⚠️ Seluruh data pengiriman, tugas dapur, invoice, dan riwayat status terkait akan ikut dibersihkan.
+              </p>
+            </div>
+          ) : ''
+        }
+        confirmText="Hapus Permanen"
+        cancelText="Batal"
+        variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   );

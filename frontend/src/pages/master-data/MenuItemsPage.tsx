@@ -19,6 +19,7 @@ import {
 import { toast } from '../../stores/toastStore';
 import { Pagination, type PaginationMeta } from '../../components/ui/Pagination';
 import { ModalPortal } from '../../components/ui/Modal';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import type { MenuItem, MenuCategory, RawMaterial } from '../../types/menu';
 
 interface RecipeFormItem {
@@ -32,6 +33,8 @@ export const MenuItemsPage: React.FC = () => {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [error, setError] = useState<string | null>(null);
@@ -235,17 +238,18 @@ export const MenuItemsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (item: MenuItem) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus menu "${item.name}"?`)) {
-      return;
-    }
-
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     try {
-      await apiClient.delete(`/tenant/menu-items/${item.id}`);
-      toast.success(`Menu "${item.name}" berhasil dihapus.`, 'Data Dihapus');
+      await apiClient.delete(`/tenant/menu-items/${itemToDelete.id}`);
+      toast.success(`Menu "${itemToDelete.name}" berhasil dihapus.`, 'Data Dihapus');
+      setItemToDelete(null);
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Gagal menghapus menu.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -401,7 +405,7 @@ export const MenuItemsPage: React.FC = () => {
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDelete(item)}
+                            onClick={() => setItemToDelete(item)}
                             className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Hapus Menu"
                           >
@@ -660,6 +664,30 @@ export const MenuItemsPage: React.FC = () => {
             </form>
           </div>
       </ModalPortal>
+
+      {/* CONFIRM DELETE MODAL */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Item Menu"
+        message={
+          itemToDelete ? (
+            <div>
+              <p>
+                Apakah Anda yakin ingin menghapus item menu <strong className="text-slate-900">{itemToDelete.name}</strong>?
+              </p>
+              <p className="text-rose-600 mt-2 text-[11px] font-medium bg-rose-50 p-2 rounded-lg border border-rose-100">
+                ⚠️ Seluruh resep takaran BOM dan relasi paket terkait menu ini akan terhapus.
+              </p>
+            </div>
+          ) : ''
+        }
+        confirmText="Hapus Menu"
+        cancelText="Batal"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
