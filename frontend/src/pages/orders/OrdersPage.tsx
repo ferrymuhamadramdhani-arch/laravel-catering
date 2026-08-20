@@ -158,24 +158,19 @@ export const OrdersPage: React.FC = () => {
   };
 
   const handleDelete = async (order: Order) => {
-    const isDraft = order.status === 'draft';
-    const confirmMsg = isDraft
-      ? `Hapus permanen pesanan draft "${order.order_number}"?`
-      : `Batalkan pesanan "${order.order_number}"?`;
+    const confirmMsg = `Hapus pesanan "${order.order_number}" (${order.customer?.name || 'Pelanggan'}) beserta seluruh data terkait?`;
 
     if (!confirm(confirmMsg)) return;
 
     try {
       await apiClient.delete(`/tenant/orders/${order.id}`);
       toast.success(
-        isDraft
-          ? `Pesanan draft ${order.order_number} berhasil dihapus.`
-          : `Pesanan ${order.order_number} berhasil dibatalkan.`,
+        `Pesanan ${order.order_number} berhasil dihapus.`,
         'Pesanan Dihapus'
       );
       fetchOrders();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal membatalkan pesanan.');
+      toast.error(err.response?.data?.message || 'Gagal menghapus pesanan.');
     }
   };
 

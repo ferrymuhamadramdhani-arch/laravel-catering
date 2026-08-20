@@ -576,15 +576,35 @@ class OrderController extends Controller
             return $this->errorResponse('Pesanan tidak ditemukan.', 404);
         }
 
-        // If draft, can hard delete. Otherwise mark cancelled
-        if ($order->status === 'draft') {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+            // Delete related deliveries & proofs
+            foreach ($order->deliveries as $del) {
+                $del->proof()?->delete();
+                $del->delete();
+            }
+            if ($order->delivery) {
+                $order->delivery->proof()?->delete();
+                $order->delivery->delete();
+            }
+
+            // Delete related payments and invoices
+            $order->payments()->delete();
+            foreach ($order->invoices as $inv) {
+                $inv->payments()->delete();
+                $inv->delete();
+            }
+
+            // Delete production tasks
+            $order->productionTasks()->delete();
+
+            // Delete order items & status history
+            $order->items()->delete();
+            $order->statusHistories()->delete();
+
+            // Delete the order itself
             $order->delete();
-            return $this->successResponse(null, 'Pesanan draft berhasil dihapus.');
-        }
+        });
 
-        $user = auth()->user();
-        $this->orderService->transitionStatus($order, 'cancelled', $user?->id, 'Pesanan dibatalkan oleh pengguna.');
-
-        return $this->successResponse(null, 'Pesanan berhasil dibatalkan.');
+        return $this->successResponse(null, 'Pesanan berhasil dihapus.');
     }
 }
