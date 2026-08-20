@@ -86,6 +86,14 @@ export interface Order {
   };
   items?: OrderItem[];
   status_histories?: OrderStatusHistory[];
+  production_tasks?: any[];
+  kitchen_status?: {
+    has_tasks: boolean;
+    is_completed: boolean;
+    total_tasks: number;
+    completed_tasks: number;
+    pending_tasks: number;
+  };
 }
 
 export interface CalendarDaySummary {

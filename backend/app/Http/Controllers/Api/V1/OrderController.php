@@ -354,6 +354,7 @@ class OrderController extends Controller
             'items.menuItem',
             'deliveryArea',
             'creator',
+            'productionTasks',
             'statusHistories.user'
         ])->find($id);
 

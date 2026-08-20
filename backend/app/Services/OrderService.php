@@ -86,6 +86,19 @@ class OrderService
             }
         }
 
+        // Business Rule: Order cannot transition to 'ready' if kitchen cooking/packing tasks are not yet completed
+        if ($newStatus === 'ready') {
+            $hasIncompleteTasks = $order->productionTasks()
+                ->where('stage', '!=', 'completed')
+                ->exists();
+
+            if ($hasIncompleteTasks) {
+                throw new \InvalidArgumentException(
+                    "Pesanan belum dapat ditandai 'Siap (Ready)' karena masih terdapat proses memasak/packing yang belum diselesaikan di Dapur Produksi (KDS)."
+                );
+            }
+        }
+
         $oldStatus = $order->status;
 
         DB::transaction(function () use ($order, $oldStatus, $newStatus, $userId, $notes) {

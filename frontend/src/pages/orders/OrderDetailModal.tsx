@@ -396,14 +396,32 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   </div>
                 )}
                 {currentStatus === 'in_production' && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleAdvanceStatus('ready')}
-                    isLoading={isUpdatingStatus}
-                    className="text-xs gap-1 bg-indigo-600 hover:bg-indigo-700 text-white"
-                  >
-                    <Package className="w-3.5 h-3.5" /> Masakan Siap (Ready Packing)
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {order.kitchen_status && order.kitchen_status.has_tasks && !order.kitchen_status.is_completed ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          disabled
+                          title="Dapur belum menyelesaikan seluruh proses masak dan QC"
+                          className="text-xs gap-1.5 bg-slate-200 text-slate-500 cursor-not-allowed opacity-75 border border-slate-300"
+                        >
+                          <Package className="w-3.5 h-3.5" /> Masakan Siap (Dapur Belum Selesai)
+                        </Button>
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-1 rounded-lg border border-amber-200">
+                          ⏳ Dapur: {order.kitchen_status.completed_tasks}/{order.kitchen_status.total_tasks} Selesai
+                        </span>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAdvanceStatus('ready')}
+                        isLoading={isUpdatingStatus}
+                        className="text-xs gap-1 bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs"
+                      >
+                        <Package className="w-3.5 h-3.5" /> Masakan Siap (Ready Packing)
+                      </Button>
+                    )}
+                  </div>
                 )}
                 {currentStatus === 'ready' && (
                   <Button

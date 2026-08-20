@@ -43,6 +43,10 @@ class Order extends Model
         'created_by',
     ];
 
+    protected $appends = [
+        'kitchen_status',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -54,6 +58,32 @@ class Order extends Model
             'total_amount'        => 'decimal:2',
             'total_hpp'           => 'decimal:2',
             'down_payment_amount' => 'decimal:2',
+        ];
+    }
+
+    public function getKitchenStatusAttribute(): array
+    {
+        $tasks = $this->relationLoaded('productionTasks') ? $this->productionTasks : $this->productionTasks()->get();
+        $total = $tasks->count();
+        if ($total === 0) {
+            return [
+                'has_tasks' => false,
+                'is_completed' => true,
+                'total_tasks' => 0,
+                'completed_tasks' => 0,
+                'pending_tasks' => 0,
+            ];
+        }
+
+        $completed = $tasks->where('stage', 'completed')->count();
+        $pending = $total - $completed;
+
+        return [
+            'has_tasks' => true,
+            'is_completed' => $pending === 0,
+            'total_tasks' => $total,
+            'completed_tasks' => $completed,
+            'pending_tasks' => $pending,
         ];
     }
 
