@@ -75,10 +75,14 @@ class ProductionController extends Controller
         $tenant = $this->tenantContext->getTenant();
         $plan = ProductionPlan::where('tenant_id', $tenant->id)->findOrFail($id);
 
-        // Fetch associated orders for BOM calculation
+        // Fetch associated orders for BOM calculation (only confirmed with DP/paid)
         $orders = Order::where('tenant_id', $tenant->id)
             ->whereDate('delivery_date', $plan->plan_date)
-            ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
+            ->whereIn('status', ['confirmed', 'processing', 'in_production', 'ready'])
+            ->where(function ($q) {
+                $q->whereIn('payment_status', ['down_payment', 'partially_paid', 'paid'])
+                  ->orWhere('total_amount', '<=', 0);
+            })
             ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial'])
             ->get();
 

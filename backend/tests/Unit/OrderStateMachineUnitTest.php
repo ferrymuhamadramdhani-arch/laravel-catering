@@ -52,6 +52,7 @@ class OrderStateMachineUnitTest extends TestCase
             'delivery_time' => '11:30',
             'status' => 'draft',
             'total_amount' => 500000,
+            'payment_status' => 'partially_paid',
         ]);
 
         $this->assertEquals('draft', $order->status);
@@ -81,6 +82,25 @@ class OrderStateMachineUnitTest extends TestCase
         $this->assertEquals('completed', $order->status);
     }
 
+    public function test_cannot_transition_to_in_production_if_unpaid(): void
+    {
+        $order = Order::create([
+            'tenant_id' => $this->tenant->id,
+            'customer_id' => $this->customer->id,
+            'order_number' => 'ORD-UNPAID-001',
+            'event_name' => 'Pesanan Belum Bayar DP',
+            'delivery_date' => now()->addDays(2)->format('Y-m-d'),
+            'status' => 'confirmed',
+            'total_amount' => 1000000,
+            'payment_status' => 'unpaid',
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('pembayaran Uang Muka (DP) belum diterima');
+
+        $this->orderService->transitionStatus($order, 'in_production', null, 'Coba paksa masak');
+    }
+
     public function test_cannot_transition_from_terminal_completed_to_draft(): void
     {
         $order = Order::create([
@@ -89,11 +109,13 @@ class OrderStateMachineUnitTest extends TestCase
             'order_number' => 'ORD-TEST-002',
             'status' => 'completed',
             'delivery_date' => now()->format('Y-m-d'),
-            'total_amount' => 300000,
+            'total_amount' => 500000,
         ]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->orderService->transitionStatus($order, 'draft', null, 'Mencoba kembali ke draft');
+        $this->expectExceptionMessage("Transisi status dari 'completed' ke 'draft' tidak diizinkan");
+
+        $this->orderService->transitionStatus($order, 'draft', null, 'Mencoba reopen order selesai');
     }
 
     public function test_cannot_transition_from_cancelled_to_in_production(): void
@@ -104,10 +126,12 @@ class OrderStateMachineUnitTest extends TestCase
             'order_number' => 'ORD-TEST-003',
             'status' => 'cancelled',
             'delivery_date' => now()->format('Y-m-d'),
-            'total_amount' => 200000,
+            'total_amount' => 500000,
         ]);
 
         $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage("Transisi status dari 'cancelled' ke 'in_production' tidak diizinkan");
+
         $this->orderService->transitionStatus($order, 'in_production', null, 'Mencoba masak order yang batal');
     }
 }

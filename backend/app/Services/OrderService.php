@@ -77,6 +77,15 @@ class OrderService
             );
         }
 
+        // Business Rule: Order cannot transition to kitchen production if DP has not been received
+        if (in_array($newStatus, ['in_production', 'ready'], true)) {
+            if ($order->payment_status === 'unpaid' && (float) $order->total_amount > 0) {
+                throw new \InvalidArgumentException(
+                    "Pesanan belum dapat diproses ke dapur produksi karena pembayaran Uang Muka (DP) belum diterima. Harap catat pembayaran DP atau terbitkan invoice terlebih dahulu."
+                );
+            }
+        }
+
         $oldStatus = $order->status;
 
         DB::transaction(function () use ($order, $oldStatus, $newStatus, $userId, $notes) {

@@ -364,14 +364,36 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
                   </Button>
                 )}
                 {currentStatus === 'confirmed' && (
-                  <Button
-                    size="sm"
-                    onClick={() => handleAdvanceStatus('in_production')}
-                    isLoading={isUpdatingStatus}
-                    className="text-xs gap-1 bg-amber-600 hover:bg-amber-700 text-white"
-                  >
-                    <ChefHat className="w-3.5 h-3.5" /> Mulai Produksi Dapur
-                  </Button>
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                    {order.payment_status === 'unpaid' && Number(order.total_amount) > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleFetchOrGenerateInvoice}
+                          className="text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-2xs"
+                        >
+                          <Receipt className="w-3.5 h-3.5" /> Catat Pembayaran DP Dulu
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled
+                          title="Pembayaran DP belum diterima"
+                          className="text-xs gap-1 bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
+                        >
+                          <ChefHat className="w-3.5 h-3.5" /> Mulai Produksi Dapur (Terkunci)
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAdvanceStatus('in_production')}
+                        isLoading={isUpdatingStatus}
+                        className="text-xs gap-1 bg-amber-600 hover:bg-amber-700 text-white shadow-2xs"
+                      >
+                        <ChefHat className="w-3.5 h-3.5" /> Mulai Produksi Dapur
+                      </Button>
+                    )}
+                  </div>
                 )}
                 {currentStatus === 'in_production' && (
                   <Button

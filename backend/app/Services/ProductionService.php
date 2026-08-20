@@ -27,10 +27,14 @@ class ProductionService
     public function generateDailyPlan(Tenant $tenant, string $planDate, ?User $createdBy = null): array
     {
         return DB::transaction(function () use ($tenant, $planDate, $createdBy) {
-            // 1. Fetch all active orders (draft, confirmed, in_production, processing, ready) for this date
+            // 1. Fetch all confirmed/active orders for this date that have at least paid DP (down_payment, partially_paid, paid)
             $orders = Order::where('tenant_id', $tenant->id)
                 ->whereDate('delivery_date', $planDate)
-                ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
+                ->whereIn('status', ['confirmed', 'processing', 'in_production', 'ready'])
+                ->where(function ($q) {
+                    $q->whereIn('payment_status', ['down_payment', 'partially_paid', 'paid'])
+                      ->orWhere('total_amount', '<=', 0);
+                })
                 ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial', 'customer'])
                 ->get();
 

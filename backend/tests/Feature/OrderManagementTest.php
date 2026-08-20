@@ -142,6 +142,7 @@ class OrderManagementTest extends TestCase
             'delivery_date' => '2026-08-25',
             'subtotal_amount' => 350000,
             'total_amount' => 350000,
+            'payment_status' => 'down_payment',
             'status' => 'confirmed',
         ]);
 

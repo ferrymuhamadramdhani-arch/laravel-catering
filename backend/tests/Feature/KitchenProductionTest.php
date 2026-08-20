@@ -149,6 +149,7 @@ class KitchenProductionTest extends TestCase
             'delivery_address' => 'Gedung Kesenian Lt 3',
             'status' => 'confirmed',
             'total_amount' => 1750000,
+            'payment_status' => 'down_payment',
         ]);
 
         OrderItem::create([
@@ -243,6 +244,7 @@ class KitchenProductionTest extends TestCase
             'delivery_address' => 'Ballroom Hotel Mulia',
             'status' => 'confirmed',
             'total_amount' => 500000,
+            'payment_status' => 'paid',
         ]);
 
         // 20 portions Ayam Bakar = 4 kg chicken, 3 kg rice
@@ -327,6 +329,7 @@ class KitchenProductionTest extends TestCase
             'recipient_phone' => '081377776666',
             'status' => 'confirmed',
             'total_amount' => 350000,
+            'payment_status' => 'down_payment',
         ]);
 
         OrderItem::create([
@@ -346,5 +349,48 @@ class KitchenProductionTest extends TestCase
         $response->assertJsonPath('data.order_number', 'ORD-LBL-001');
         $response->assertJsonPath('data.event_name', 'Seminar Bisnis');
         $response->assertJsonPath('data.recipient_name', 'Pak Andi');
+    }
+
+    public function test_unpaid_order_is_not_included_in_daily_production_plan(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $customer = Customer::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Customer Belum Bayar',
+            'phone' => '081211112222',
+        ]);
+
+        $order = Order::create([
+            'tenant_id' => $this->tenant->id,
+            'customer_id' => $customer->id,
+            'order_number' => 'ORD-UNPAID-PLAN-001',
+            'event_type' => 'Nasi Kotak',
+            'delivery_date' => '2026-08-28',
+            'delivery_time' => '11:00',
+            'status' => 'confirmed',
+            'total_amount' => 1000000,
+            'payment_status' => 'unpaid', // NOT paid DP yet
+        ]);
+
+        OrderItem::create([
+            'tenant_id' => $this->tenant->id,
+            'order_id' => $order->id,
+            'menu_package_id' => $this->packageBox->id,
+            'item_name' => $this->packageBox->name,
+            'quantity' => 30,
+            'unit_price' => 35000,
+            'subtotal_price' => 1000000,
+        ]);
+
+        $response = $this->withHeader('X-Tenant-ID', $this->tenant->id)
+            ->postJson('/api/v1/tenant/production/plans/generate', [
+                'plan_date' => '2026-08-28',
+            ]);
+
+        $response->assertStatus(200);
+        // Should have 0 orders & 0 portions because DP is not paid
+        $response->assertJsonPath('data.total_orders', 0);
+        $response->assertJsonPath('data.total_portions', 0);
     }
 }
