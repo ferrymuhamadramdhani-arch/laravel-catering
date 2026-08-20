@@ -78,7 +78,7 @@ class ProductionController extends Controller
         // Fetch associated orders for BOM calculation
         $orders = Order::where('tenant_id', $tenant->id)
             ->whereDate('delivery_date', $plan->plan_date)
-            ->whereIn('status', ['confirmed', 'processing', 'ready', 'completed'])
+            ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready', 'completed'])
             ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial'])
             ->get();
 

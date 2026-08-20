@@ -27,10 +27,10 @@ class ProductionService
     public function generateDailyPlan(Tenant $tenant, string $planDate, ?User $createdBy = null): array
     {
         return DB::transaction(function () use ($tenant, $planDate, $createdBy) {
-            // 1. Fetch all confirmed & processing orders for this date
+            // 1. Fetch all active orders (draft, confirmed, in_production, processing, ready) for this date
             $orders = Order::where('tenant_id', $tenant->id)
                 ->whereDate('delivery_date', $planDate)
-                ->whereIn('status', ['confirmed', 'processing'])
+                ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
                 ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial', 'customer'])
                 ->get();
 
@@ -285,7 +285,7 @@ class ProductionService
             // 2. Fetch associated orders
             $orders = Order::where('tenant_id', $tenant->id)
                 ->whereDate('delivery_date', $plan->plan_date)
-                ->whereIn('status', ['confirmed', 'processing'])
+                ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production'])
                 ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial'])
                 ->get();
 

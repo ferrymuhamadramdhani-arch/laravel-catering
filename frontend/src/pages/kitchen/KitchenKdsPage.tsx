@@ -32,7 +32,7 @@ export const KitchenKdsPage: React.FC = () => {
   const [labelOrderId, setLabelOrderId] = useState<number | null>(null);
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
 
-  // Load production plan for selected date
+  // Load production plan for selected date (with auto-sync)
   const loadPlanForDate = useCallback(async (dateToLoad: string) => {
     setIsLoading(true);
     try {
@@ -49,7 +49,18 @@ export const KitchenKdsPage: React.FC = () => {
           setDetailData(detailRes.data.data);
         }
       } else {
-        setDetailData(null);
+        // Auto-generate plan for the selected date so newly created orders appear immediately
+        const syncRes = await apiClient.post('/production/plans/generate', {
+          plan_date: dateToLoad,
+        });
+        if (syncRes.data?.data?.plan?.id) {
+          const detailRes = await apiClient.get(`/production/plans/${syncRes.data.data.plan.id}`);
+          if (detailRes.data?.data) {
+            setDetailData(detailRes.data.data);
+          }
+        } else {
+          setDetailData(null);
+        }
       }
     } catch (err) {
       console.error('Failed to load production plan:', err);
