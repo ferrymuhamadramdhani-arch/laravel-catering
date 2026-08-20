@@ -46,8 +46,11 @@ class DeliveryController extends Controller
 
         if ($request->filled('date')) {
             $date = $request->date;
-            $query->whereHas('order', function ($q) use ($date) {
-                $q->whereDate('delivery_date', $date);
+            $query->where(function ($q) use ($date) {
+                $q->whereHas('order', function ($oq) use ($date) {
+                    $oq->whereDate('delivery_date', $date)
+                       ->orWhere('delivery_date', 'like', "{$date}%");
+                })->orWhereDate('created_at', $date);
             });
         }
 

@@ -531,8 +531,21 @@ class OrderController extends Controller
                 $validated['notes'] ?? null
             );
 
+            // If transitioned to delivering and no Delivery record exists yet, automatically create one
+            if ($validated['status'] === 'delivering') {
+                $tenant = $this->tenantContext->getTenant();
+                if ($tenant && !$updatedOrder->delivery()->exists()) {
+                    app(\App\Services\DeliveryService::class)->assignDelivery($tenant, $updatedOrder, [
+                        'courier_name' => 'Driver Ekspedisi Katering',
+                        'destination_address' => $updatedOrder->delivery_address,
+                        'delivery_time_target' => $updatedOrder->delivery_time ?? '11:30',
+                        'vehicle_type' => 'motorcycle',
+                    ], $user);
+                }
+            }
+
             return $this->successResponse(
-                $updatedOrder->load(['customer', 'items', 'deliveryArea']),
+                $updatedOrder->load(['customer', 'items', 'deliveryArea', 'delivery']),
                 "Status pesanan berhasil diperbarui menjadi '{$validated['status']}'."
             );
         } catch (\InvalidArgumentException $e) {
