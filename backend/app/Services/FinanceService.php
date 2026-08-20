@@ -114,12 +114,32 @@ class FinanceService
     public function recordPayment(Invoice $invoice, array $data, User $receiver): Payment
     {
         return DB::transaction(function () use ($invoice, $data, $receiver) {
-            $paymentNumber = $this->generatePaymentNumber($invoice->tenant_id);
-            $amount = (float) $data['amount'];
+            // Lock invoice row for update to prevent concurrent duplicate payments
+            $invoice = Invoice::where('id', $invoice->id)->lockForUpdate()->firstOrFail();
 
+            $totalPaidExisting = (float) Payment::where('invoice_id', $invoice->id)
+                ->where('status', 'confirmed')
+                ->sum('amount');
+
+            $invoiceTotal = (float) $invoice->total_amount;
+            $currentRemaining = max(0, $invoiceTotal - $totalPaidExisting);
+
+            if ($currentRemaining <= 0 || $invoice->status === 'paid') {
+                throw new \InvalidArgumentException('Faktur invoice ini sudah lunas. Tidak dapat mencatat pembayaran baru.');
+            }
+
+            $amount = (float) $data['amount'];
             if ($amount <= 0) {
                 throw new \InvalidArgumentException('Nominal pembayaran harus lebih besar dari 0.');
             }
+
+            if ($amount > $currentRemaining) {
+                throw new \InvalidArgumentException(
+                    "Nominal pembayaran (Rp " . number_format($amount, 0, ',', '.') . ") melebihi sisa tagihan faktur (Rp " . number_format($currentRemaining, 0, ',', '.') . ")."
+                );
+            }
+
+            $paymentNumber = $this->generatePaymentNumber($invoice->tenant_id);
 
             $payment = Payment::create([
                 'tenant_id' => $invoice->tenant_id,
@@ -139,19 +159,10 @@ class FinanceService
             ]);
 
             // Re-calculate invoice totals
-            $totalPaidForInvoice = (float) Payment::where('invoice_id', $invoice->id)
-                ->where('status', 'confirmed')
-                ->sum('amount');
-
-            $invoiceTotal = (float) $invoice->total_amount;
+            $totalPaidForInvoice = $totalPaidExisting + $amount;
             $invoiceRemaining = max(0, $invoiceTotal - $totalPaidForInvoice);
 
-            $invoiceStatus = 'unpaid';
-            if ($totalPaidForInvoice >= $invoiceTotal) {
-                $invoiceStatus = 'paid';
-            } elseif ($totalPaidForInvoice > 0) {
-                $invoiceStatus = 'partially_paid';
-            }
+            $invoiceStatus = $invoiceRemaining <= 0 ? 'paid' : ($totalPaidForInvoice > 0 ? 'partially_paid' : 'unpaid');
 
             $invoice->update([
                 'paid_amount' => $totalPaidForInvoice,
@@ -168,13 +179,7 @@ class FinanceService
                         ->sum('amount');
 
                     $orderTotal = (float) $order->total_amount;
-                    $orderPaymentStatus = 'unpaid';
-
-                    if ($totalPaidForOrder >= $orderTotal) {
-                        $orderPaymentStatus = 'paid';
-                    } elseif ($totalPaidForOrder > 0) {
-                        $orderPaymentStatus = 'partially_paid';
-                    }
+                    $orderPaymentStatus = $totalPaidForOrder >= $orderTotal ? 'paid' : ($totalPaidForOrder > 0 ? 'partially_paid' : 'unpaid');
 
                     $order->update([
                         'payment_status' => $orderPaymentStatus,
@@ -184,6 +189,55 @@ class FinanceService
             }
 
             return $payment;
+        });
+    }
+
+    /**
+     * Delete / Void a Payment and automatically recalculate invoice & order balances
+     */
+    public function deletePayment(Payment $payment): void
+    {
+        DB::transaction(function () use ($payment) {
+            $invoiceId = $payment->invoice_id;
+            $orderId = $payment->order_id;
+
+            $payment->delete();
+
+            if ($invoiceId) {
+                $invoice = Invoice::find($invoiceId);
+                if ($invoice) {
+                    $totalPaidForInvoice = (float) Payment::where('invoice_id', $invoice->id)
+                        ->where('status', 'confirmed')
+                        ->sum('amount');
+
+                    $invoiceTotal = (float) $invoice->total_amount;
+                    $invoiceRemaining = max(0, $invoiceTotal - $totalPaidForInvoice);
+                    $invoiceStatus = $invoiceRemaining <= 0 ? 'paid' : ($totalPaidForInvoice > 0 ? 'partially_paid' : 'unpaid');
+
+                    $invoice->update([
+                        'paid_amount' => $totalPaidForInvoice,
+                        'remaining_amount' => $invoiceRemaining,
+                        'status' => $invoiceStatus,
+                    ]);
+                }
+            }
+
+            if ($orderId) {
+                $order = Order::find($orderId);
+                if ($order) {
+                    $totalPaidForOrder = (float) Payment::where('order_id', $order->id)
+                        ->where('status', 'confirmed')
+                        ->sum('amount');
+
+                    $orderTotal = (float) $order->total_amount;
+                    $orderPaymentStatus = $totalPaidForOrder >= $orderTotal ? 'paid' : ($totalPaidForOrder > 0 ? 'partially_paid' : 'unpaid');
+
+                    $order->update([
+                        'payment_status' => $orderPaymentStatus,
+                        'down_payment_amount' => $totalPaidForOrder,
+                    ]);
+                }
+            }
         });
     }
 

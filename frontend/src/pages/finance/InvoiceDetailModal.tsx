@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ModalPortal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
-import type { Invoice } from '../../types/finance';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import type { Invoice, Payment } from '../../types/finance';
 import { formatCurrency, formatDateIndo } from '../../lib/utils';
 import {
   Printer,
@@ -13,8 +14,11 @@ import {
   CreditCard,
   Plus,
   Zap,
+  Trash2,
 } from 'lucide-react';
 import { OnlinePaymentModal } from '../../components/payment/OnlinePaymentModal';
+import apiClient from '../../api/axios';
+import { toast } from '../../stores/toastStore';
 
 interface InvoiceDetailModalProps {
   isOpen: boolean;
@@ -32,7 +36,28 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   onPaymentSuccess,
 }) => {
   const [isGatewayOpen, setIsGatewayOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+
   if (!isOpen || !invoice) return null;
+
+  const handleDeletePayment = async () => {
+    if (!paymentToDelete) return;
+    setIsDeletingPayment(true);
+    try {
+      await apiClient.delete(`/tenant/payments/${paymentToDelete.id}`);
+      toast.success('Catatan pembayaran berhasil dihapus dan saldo tagihan diperbarui.', 'Hapus Berhasil');
+      setPaymentToDelete(null);
+      if (onPaymentSuccess) {
+        onPaymentSuccess();
+      }
+    } catch (err: any) {
+      console.error('Delete payment failed:', err);
+      toast.error(err.response?.data?.message || 'Gagal menghapus pembayaran.');
+    } finally {
+      setIsDeletingPayment(false);
+    }
+  };
 
   const total = Number(invoice.total_amount);
   const paid = Number(invoice.paid_amount);
@@ -410,6 +435,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                         <th className="px-4 py-2">Metode</th>
                         <th className="px-4 py-2">Rekening / Ref</th>
                         <th className="px-4 py-2 text-right">Nominal</th>
+                        <th className="px-4 py-2 text-center invoice-no-print print:hidden">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 print:divide-slate-200">
@@ -421,6 +447,16 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                           <td className="px-4 py-2 text-slate-500 print:text-slate-700">{p.destination_bank_account || p.reference_number || '—'}</td>
                           <td className="px-4 py-2 text-right font-extrabold text-emerald-700 print:text-slate-900">
                             {formatCurrency(Number(p.amount))}
+                          </td>
+                          <td className="px-4 py-2 text-center invoice-no-print print:hidden">
+                            <button
+                              type="button"
+                              onClick={() => setPaymentToDelete(p)}
+                              title="Hapus Pembayaran Duplikat / Salah"
+                              className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -451,6 +487,19 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               setIsGatewayOpen(false);
               if (onPaymentSuccess) onPaymentSuccess();
             }}
+          />
+
+          {/* Confirm Delete Payment Modal */}
+          <ConfirmModal
+            isOpen={Boolean(paymentToDelete)}
+            title="Hapus Catatan Pembayaran?"
+            message={`Apakah Anda yakin ingin menghapus catatan pembayaran ${paymentToDelete?.payment_number} sebesar ${paymentToDelete ? formatCurrency(Number(paymentToDelete.amount)) : ''}? Saldo tagihan dan sisa piutang faktur akan otomatis dihitung ulang.`}
+            confirmText="Ya, Hapus Pembayaran"
+            cancelText="Batal"
+            variant="danger"
+            isLoading={isDeletingPayment}
+            onConfirm={handleDeletePayment}
+            onClose={() => setPaymentToDelete(null)}
           />
         </div>
       </div>

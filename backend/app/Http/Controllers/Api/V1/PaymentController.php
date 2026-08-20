@@ -114,4 +114,17 @@ class PaymentController extends Controller
             return $this->errorResponse('Gagal mencatat pembayaran: ' . $e->getMessage(), 422);
         }
     }
+
+    /**
+     * Delete / Void a duplicate or erroneous payment.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        $tenant = $this->tenantContext->getTenant();
+        $payment = Payment::where('tenant_id', $tenant->id)->findOrFail($id);
+
+        $this->financeService->deletePayment($payment);
+
+        return $this->successResponse(null, 'Catatan pembayaran berhasil dihapus/dibatalkan.');
+    }
 }

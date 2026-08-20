@@ -156,6 +156,7 @@ Route::prefix('v1')->group(function () {
             // Payments (Pencatatan Pembayaran)
             Route::get('/payments', [\App\Http\Controllers\Api\V1\PaymentController::class, 'index']);
             Route::post('/invoices/{invoiceId}/payments', [\App\Http\Controllers\Api\V1\PaymentController::class, 'store']);
+            Route::delete('/payments/{id}', [\App\Http\Controllers\Api\V1\PaymentController::class, 'destroy']);
 
             // Production & Kitchen System (Dapur & KDS)
             Route::get('/production/plans', [\App\Http\Controllers\Api\V1\ProductionController::class, 'index']);

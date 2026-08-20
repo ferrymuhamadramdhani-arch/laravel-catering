@@ -98,12 +98,40 @@ class PaymentGatewayService
         // Process successful payment settlement / capture
         if (in_array($transactionStatus, ['settlement', 'capture', 'paid', 'success']) && $fraudStatus === 'accept') {
             return DB::transaction(function () use ($order, $grossAmount, $paymentType, $transactionId) {
+                // Check if this transaction ID was already recorded (Idempotency)
+                $existingPayment = Payment::where('tenant_id', $order->tenant_id)
+                    ->where('reference_number', $transactionId)
+                    ->first();
+                if ($existingPayment) {
+                    return [
+                        'success' => true,
+                        'message' => 'Transaksi pembayaran ini sudah pernah dicatat sebelumnya (Idempotent).',
+                        'data' => $existingPayment,
+                    ];
+                }
+
                 $invoice = $order->invoices()->first();
                 if (!$invoice) {
                     $invoice = $this->financeService->createInvoiceForOrder($order, ['invoice_type' => 'full']);
                 }
 
-                $paidAmount = $grossAmount > 0 ? $grossAmount : (float) $invoice->remaining_amount;
+                // Lock invoice row
+                $invoice = Invoice::where('id', $invoice->id)->lockForUpdate()->firstOrFail();
+
+                $totalPaidExisting = (float) Payment::where('invoice_id', $invoice->id)
+                    ->where('status', 'confirmed')
+                    ->sum('amount');
+
+                $currentRemaining = max(0, (float) $invoice->total_amount - $totalPaidExisting);
+
+                if ($currentRemaining <= 0 || $invoice->status === 'paid') {
+                    return [
+                        'success' => true,
+                        'message' => 'Faktur pesanan ini sudah berstatus lunas.',
+                    ];
+                }
+
+                $paidAmount = $grossAmount > 0 ? min($grossAmount, $currentRemaining) : $currentRemaining;
 
                 // Create confirmed payment record
                 $paymentNumber = 'PAY/' . Carbon::now()->format('Ym') . '/' . rand(1000, 9999);
@@ -122,7 +150,7 @@ class PaymentGatewayService
                 ]);
 
                 // Update Invoice
-                $newPaidAmount = (float) $invoice->paid_amount + $paidAmount;
+                $newPaidAmount = $totalPaidExisting + $paidAmount;
                 $newRemaining = max(0, (float) $invoice->total_amount - $newPaidAmount);
                 $newInvoiceStatus = $newRemaining <= 0 ? 'paid' : ($newPaidAmount > 0 ? 'partially_paid' : 'unpaid');
 
