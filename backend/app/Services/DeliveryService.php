@@ -259,7 +259,7 @@ class DeliveryService
         // Also fetch orders for today that do not have a courier assigned yet
         $unassignedOrders = Order::where('tenant_id', $tenant->id)
             ->whereDate('delivery_date', $targetDate)
-            ->whereIn('status', ['confirmed', 'processing', 'ready'])
+            ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
             ->whereDoesntHave('delivery')
             ->with(['customer', 'deliveryArea', 'items'])
             ->get();

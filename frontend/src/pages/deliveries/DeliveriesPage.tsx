@@ -583,16 +583,67 @@ export const DeliveriesPage: React.FC = () => {
                   </tr>
                 ) : deliveries.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-16 text-center text-slate-500">
-                      <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-1">
-                          <Truck className="w-6 h-6" />
+                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500">
+                      {unassignedOrders.length > 0 ? (
+                        <div className="space-y-4 max-w-2xl mx-auto text-left">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-bold text-slate-900 text-sm">Pesanan Siap Kirim (Belum Ditugaskan Kurir)</p>
+                              <p className="text-xs text-slate-500">Terdapat {unassignedOrders.length} pesanan yang siap ditugaskan ke armada driver hari ini:</p>
+                            </div>
+                            <Link
+                              to="/deliveries/routes"
+                              className="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-2xs"
+                            >
+                              <Navigation className="w-3.5 h-3.5" /> Buka Optimasi Rute
+                            </Link>
+                          </div>
+
+                          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
+                            {unassignedOrders.map((ord) => (
+                              <div key={ord.id} className="p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 hover:bg-amber-50/40 transition-colors">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <strong className="text-xs font-mono font-bold text-slate-900">{ord.order_number}</strong>
+                                    <span className="text-xs text-slate-400">•</span>
+                                    <span className="text-xs font-semibold text-slate-800">{ord.customer?.name}</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">
+                                      {ord.status === 'ready' ? 'Siap Kirim' : ord.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                                    {ord.delivery_address || 'Alamat katering'}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+                                  <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                                    Jam: {ord.delivery_time || '11:30'}
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleOpenAssign(ord)}
+                                    className="text-xs font-bold gap-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-xs"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" /> Tugaskan Kurir
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <p className="font-bold text-slate-800 text-sm">Belum Ada Penugasan Pengiriman</p>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                          Pilih pesanan aktif dari banner di atas untuk menugaskan kurir driver dan armada kendaraan.
-                        </p>
-                      </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-1">
+                            <Truck className="w-6 h-6" />
+                          </div>
+                          <p className="font-bold text-slate-800 text-sm">Belum Ada Penugasan Pengiriman</p>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            Tidak ada pesanan aktif yang perlu dikirim untuk tanggal yang dipilih.
+                          </p>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ) : (
