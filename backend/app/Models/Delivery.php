@@ -18,6 +18,8 @@ class Delivery extends Model
         'delivery_number',
         'delivery_batch_code',
         'delivery_area_id',
+        'courier_id',
+        'vehicle_id',
         'courier_name',
         'courier_phone',
         'vehicle_type',
@@ -44,6 +46,16 @@ class Delivery extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(Courier::class);
+    }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function deliveryArea(): BelongsTo

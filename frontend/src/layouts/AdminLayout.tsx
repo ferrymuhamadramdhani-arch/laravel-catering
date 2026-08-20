@@ -21,6 +21,7 @@ import {
   Tag,
   Package,
   UserSearch,
+  UserCheck,
   Factory,
   MapPinned,
   ArrowDownLeft,
@@ -256,6 +257,38 @@ export const AdminLayout: React.FC = () => {
                 >
                   <MapPinned className="w-3.5 h-3.5" />
                   <span>Area Pengiriman</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/couriers"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Kurir &amp; Driver</span>
+                </NavLink>
+
+                <NavLink
+                  to="/master-data/vehicles"
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      'flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                      isActive
+                        ? 'bg-amber-600/90 text-white font-semibold shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    )
+                  }
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>Armada Kendaraan</span>
                 </NavLink>
               </div>
             )}

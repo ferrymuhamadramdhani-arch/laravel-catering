@@ -51,6 +51,8 @@ class DeliveryService
 
             $delivery->delivery_batch_code = $data['delivery_batch_code'] ?? $delivery->delivery_batch_code;
             $delivery->delivery_area_id = $data['delivery_area_id'] ?? $order->delivery_area_id;
+            $delivery->courier_id = $data['courier_id'] ?? $delivery->courier_id;
+            $delivery->vehicle_id = $data['vehicle_id'] ?? $delivery->vehicle_id;
             $delivery->courier_name = $data['courier_name'];
             $delivery->courier_phone = $data['courier_phone'] ?? null;
             $delivery->vehicle_type = $data['vehicle_type'] ?? 'motorcycle';
@@ -72,7 +74,7 @@ class DeliveryService
                 'changed_by' => $user?->id,
             ]);
 
-            return $delivery->load(['order.customer', 'deliveryArea', 'proof']);
+            return $delivery->load(['order.customer', 'deliveryArea', 'proof', 'courier', 'vehicle']);
         });
     }
 
@@ -270,6 +272,90 @@ class DeliveryService
             'unassigned_orders_count' => $unassignedOrders->count(),
             'deliveries' => $deliveries,
             'unassigned_orders' => $unassignedOrders,
+        ];
+    }
+
+    /**
+     * Get live availability status for couriers and fleet vehicles.
+     */
+    public function getAvailableResources(Tenant $tenant, ?string $date = null, ?string $time = null): array
+    {
+        $targetDate = $date ?? now()->toDateString();
+
+        // 1. Fetch all active couriers and vehicles
+        $couriers = \App\Models\Courier::where('tenant_id', $tenant->id)->where('is_active', true)->get();
+        $vehicles = \App\Models\Vehicle::where('tenant_id', $tenant->id)->where('is_active', true)->get();
+
+        // 2. Fetch active deliveries for this date
+        $activeDeliveries = Delivery::where('tenant_id', $tenant->id)
+            ->whereHas('order', function ($q) use ($targetDate) {
+                $q->whereDate('delivery_date', $targetDate);
+            })
+            ->whereIn('status', ['assigned', 'dispatched', 'arrived'])
+            ->with(['order'])
+            ->get();
+
+        $courierDeliveries = $activeDeliveries->groupBy('courier_id');
+        $vehicleDeliveries = $activeDeliveries->groupBy('vehicle_id');
+
+        $courierList = $couriers->map(function ($courier) use ($courierDeliveries) {
+            $assigned = $courierDeliveries->get($courier->id);
+            $isBusy = $assigned && $assigned->isNotEmpty();
+            $currentJob = $isBusy ? $assigned->first() : null;
+
+            return [
+                'id' => $courier->id,
+                'name' => $courier->name,
+                'phone' => $courier->phone,
+                'license_type' => $courier->license_type,
+                'vehicle_type_preference' => $courier->vehicle_type_preference,
+                'is_available' => !$isBusy,
+                'status_label' => $isBusy ? 'Sedang Mengantar' : 'Tersedia',
+                'current_job' => $currentJob ? [
+                    'delivery_number' => $currentJob->delivery_number,
+                    'order_number' => $currentJob->order?->order_number,
+                    'time_target' => $currentJob->delivery_time_target,
+                ] : null,
+            ];
+        });
+
+        $vehicleList = $vehicles->map(function ($vehicle) use ($vehicleDeliveries) {
+            $assigned = $vehicleDeliveries->get($vehicle->id);
+            $isBusy = $assigned && $assigned->isNotEmpty();
+            $isMaintenance = in_array($vehicle->condition_status, ['maintenance', 'repairing']);
+            $currentJob = $isBusy ? $assigned->first() : null;
+
+            $statusLabel = 'Tersedia';
+            if ($isMaintenance) {
+                $statusLabel = 'Dalam Perbaikan';
+            } elseif ($isBusy) {
+                $statusLabel = 'Sedang Digunakan';
+            }
+
+            return [
+                'id' => $vehicle->id,
+                'name' => $vehicle->name,
+                'vehicle_type' => $vehicle->vehicle_type,
+                'license_plate' => $vehicle->license_plate,
+                'max_capacity_box' => $vehicle->max_capacity_box,
+                'condition_status' => $vehicle->condition_status,
+                'is_available' => !$isBusy && !$isMaintenance,
+                'status_label' => $statusLabel,
+                'current_job' => $currentJob ? [
+                    'delivery_number' => $currentJob->delivery_number,
+                    'order_number' => $currentJob->order?->order_number,
+                    'time_target' => $currentJob->delivery_time_target,
+                ] : null,
+            ];
+        });
+
+        return [
+            'date' => $targetDate,
+            'time' => $time,
+            'couriers' => $courierList,
+            'vehicles' => $vehicleList,
+            'available_couriers_count' => $courierList->where('is_available', true)->count(),
+            'available_vehicles_count' => $vehicleList->where('is_available', true)->count(),
         ];
     }
 }

@@ -226,4 +226,22 @@ class DeliveryController extends Controller
 
         return $this->successResponse($result, 'Sinkronisasi data pengiriman offline selesai.');
     }
+
+    /**
+     * Get live available couriers and fleet vehicles for dispatching.
+     */
+    public function availableResources(Request $request): JsonResponse
+    {
+        $tenant = $this->tenantContext->getTenant();
+        if (!$tenant) {
+            return $this->errorResponse('Tenant tidak aktif atau tidak ditemukan.', 404);
+        }
+
+        $date = $request->input('date');
+        $time = $request->input('time');
+
+        $result = $this->deliveryService->getAvailableResources($tenant, $date, $time);
+
+        return $this->successResponse($result, 'Data ketersediaan kurir dan armada berhasil diambil.');
+    }
 }

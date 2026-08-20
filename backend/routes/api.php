@@ -166,6 +166,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/production/orders/{orderId}/label', [\App\Http\Controllers\Api\V1\ProductionController::class, 'getOrderLabel']);
 
             // Deliveries & Courier System (Pengiriman & Kurir)
+            Route::apiResource('couriers', \App\Http\Controllers\Api\V1\CourierController::class);
+            Route::apiResource('vehicles', \App\Http\Controllers\Api\V1\VehicleController::class);
+            Route::get('/deliveries/available-resources', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'availableResources']);
             Route::get('/deliveries', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'index']);
             Route::get('/deliveries/today', [\App\Http\Controllers\Api\V1\DeliveryController::class, 'today']);
             Route::get('/deliveries/routes/optimize', [\App\Http\Controllers\Api\V1\DeliveryRouteController::class, 'optimize']);

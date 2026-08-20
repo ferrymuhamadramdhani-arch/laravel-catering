@@ -16,6 +16,8 @@ import { MenuPackagesPage } from '../pages/master-data/MenuPackagesPage';
 import { CustomersPage } from '../pages/master-data/CustomersPage';
 import { SuppliersPage } from '../pages/master-data/SuppliersPage';
 import { DeliveryAreasPage } from '../pages/master-data/DeliveryAreasPage';
+import { CouriersPage } from '../pages/master-data/CouriersPage';
+import { VehiclesPage } from '../pages/master-data/VehiclesPage';
 import { OrdersPage } from '../pages/orders/OrdersPage';
 import { PurchaseOrdersPage } from '../pages/procurement/PurchaseOrdersPage';
 import { StockInPage } from '../pages/inventory/StockInPage';
@@ -87,6 +89,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/master-data/customers" element={<CustomersPage />} />
         <Route path="/master-data/suppliers" element={<SuppliersPage />} />
         <Route path="/master-data/delivery-areas" element={<DeliveryAreasPage />} />
+        <Route path="/master-data/couriers" element={<CouriersPage />} />
+        <Route path="/master-data/vehicles" element={<VehiclesPage />} />
         <Route path="/menus" element={<Navigate to="/master-data/menus" replace />} />
 
         {/* Operations & Procurement */}
