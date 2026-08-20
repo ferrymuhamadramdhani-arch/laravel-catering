@@ -8,7 +8,6 @@ import {
   CreditCard,
   X,
   Building2,
-  DollarSign,
   FileText,
   CheckCircle2,
   AlertCircle,
@@ -178,10 +177,10 @@ export const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
               </div>
 
               <div className="relative">
-                <DollarSign className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                <span className="text-xs font-bold text-slate-400 absolute left-3 top-2.5">Rp</span>
                 <input
                   type="number"
-                  step="1000"
+                  step="any"
                   min="1"
                   max={remaining}
                   value={amount}
