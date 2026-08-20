@@ -78,9 +78,23 @@ class ProductionController extends Controller
         // Fetch associated orders for BOM calculation
         $orders = Order::where('tenant_id', $tenant->id)
             ->whereDate('delivery_date', $plan->plan_date)
-            ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready', 'completed'])
+            ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
             ->with(['items.menuItem.recipes.rawMaterial', 'items.menuPackage.items.menuItem.recipes.rawMaterial'])
             ->get();
+
+        $totalOrders = $orders->count();
+        $totalPortions = (int) $orders->sum(fn ($o) => $o->items->sum('quantity'));
+
+        // If active orders changed or were deleted, update plan metrics
+        if ($plan->total_orders !== $totalOrders || $plan->total_portions !== $totalPortions) {
+            $plan->total_orders = $totalOrders;
+            $plan->total_portions = $totalPortions;
+            if ($totalOrders === 0) {
+                $plan->status = 'in_progress';
+                $plan->tasks()->delete();
+            }
+            $plan->save();
+        }
 
         $bomRequirements = $this->productionService->calculateBomRequirements($tenant, $orders);
 
@@ -95,7 +109,7 @@ class ProductionController extends Controller
                 'plan' => $plan,
                 'bom_requirements' => $bomRequirements,
                 'tasks' => $tasks,
-                'orders_count' => $orders->count(),
+                'orders_count' => $totalOrders,
             ],
         ]);
     }

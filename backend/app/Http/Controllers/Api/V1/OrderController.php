@@ -577,6 +577,9 @@ class OrderController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($order) {
+            $deliveryDate = $order->delivery_date;
+            $tenantId = $order->tenant_id;
+
             // Delete related deliveries & proofs
             foreach ($order->deliveries as $del) {
                 $del->proof()?->delete();
@@ -603,6 +606,32 @@ class OrderController extends Controller
 
             // Delete the order itself
             $order->delete();
+
+            // Recalculate or clean up production plan for this delivery date
+            if ($deliveryDate) {
+                $remainingOrders = Order::where('tenant_id', $tenantId)
+                    ->whereDate('delivery_date', $deliveryDate)
+                    ->whereIn('status', ['draft', 'confirmed', 'processing', 'in_production', 'ready'])
+                    ->with('items')
+                    ->get();
+
+                $plan = \App\Models\ProductionPlan::where('tenant_id', $tenantId)
+                    ->whereDate('plan_date', $deliveryDate)
+                    ->first();
+
+                if ($plan) {
+                    $totalOrders = $remainingOrders->count();
+                    $totalPortions = (int) $remainingOrders->sum(fn ($o) => $o->items->sum('quantity'));
+
+                    $plan->total_orders = $totalOrders;
+                    $plan->total_portions = $totalPortions;
+                    if ($totalOrders === 0) {
+                        $plan->status = 'in_progress';
+                        $plan->tasks()->delete();
+                    }
+                    $plan->save();
+                }
+            }
         });
 
         return $this->successResponse(null, 'Pesanan berhasil dihapus.');
